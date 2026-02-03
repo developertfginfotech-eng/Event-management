@@ -1,0 +1,71 @@
+.event-form-page h1 {
+  margin-bottom: 32px;
+  color: var(--dark);
+  font-size: 28px;
+  font-weight: 700;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--border);
+}
+
+.event-form {
+  background: white;
+  padding: 36px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+}
+
+.event-form h3 {
+  margin: 36px 0 24px 0;
+  color: var(--dark);
+  font-size: 18px;
+  font-weight: 700;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--light-gray);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .event-form {
+    padding: 24px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 2px solid var(--light-gray);
+}
+
+.form-actions button {
+  padding: 14px 32px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.form-actions button.primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+}
+
+.form-actions button.secondary {
+  background: white;
+  border: 2px solid var(--border);
+  color: var(--dark);
+}
+
+.form-actions button.secondary:hover {
+  border-color: var(--gray);
+  background: var(--light-gray);
+}
