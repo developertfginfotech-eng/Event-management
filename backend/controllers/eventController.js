@@ -105,7 +105,7 @@ exports.createEvent = async (req, res, next) => {
 // @access  Private (Admin/Super Admin)
 exports.updateEvent = async (req, res, next) => {
   try {
-    let event = await Event.findById(req.params.id);
+    const event = await Event.findById(req.params.id);
 
     if (!event) {
       return res.status(404).json({
@@ -114,10 +114,11 @@ exports.updateEvent = async (req, res, next) => {
       });
     }
 
-    event = await Event.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    // Update fields
+    Object.assign(event, req.body);
+
+    // Save with validation
+    await event.save();
 
     res.status(200).json({
       success: true,

@@ -23,15 +23,10 @@ const leadSchema = new mongoose.Schema(
       ],
     },
     designation: String,
-    event: {
+    source: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Event',
       required: true,
-    },
-    source: {
-      type: String,
-      enum: ['Manual', 'Business Card Scan', 'CSV Upload', 'Other'],
-      default: 'Manual',
     },
     priority: {
       type: String,
@@ -55,6 +50,23 @@ const leadSchema = new mongoose.Schema(
     notes: [
       {
         text: String,
+        createdBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+    communications: [
+      {
+        type: {
+          type: String,
+          enum: ['call', 'email', 'whatsapp', 'meeting', 'other'],
+        },
+        notes: String,
         createdBy: {
           type: mongoose.Schema.Types.ObjectId,
           ref: 'User',
@@ -101,7 +113,7 @@ const leadSchema = new mongoose.Schema(
 );
 
 // Index for better query performance
-leadSchema.index({ event: 1, status: 1 });
+leadSchema.index({ source: 1, status: 1 });
 leadSchema.index({ assignedTo: 1 });
 leadSchema.index({ createdBy: 1 });
 

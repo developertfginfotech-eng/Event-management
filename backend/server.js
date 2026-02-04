@@ -20,6 +20,7 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
+  'http://localhost:3005',
   process.env.ADMIN_PANEL_URL,
   process.env.MOBILE_APP_URL
 ].filter(Boolean);
