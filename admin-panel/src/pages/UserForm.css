@@ -89,39 +89,40 @@
   font-weight: 700;
 }
 
-.password-input-wrapper {
+.user-form .password-input-wrapper {
   position: relative;
-  display: block;
+  width: 100%;
 }
 
-.password-input-wrapper input {
+.user-form .password-input-wrapper input {
   width: 100%;
   padding-right: 50px !important;
 }
 
-.password-toggle-btn {
+.user-form .password-toggle-btn {
   position: absolute;
-  right: 12px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  background: none;
+  background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 18px;
-  padding: 5px 8px;
+  font-size: 20px;
+  padding: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.6;
+  opacity: 0.5;
   transition: opacity 0.2s;
   z-index: 10;
-  pointer-events: all;
+  height: 36px;
+  width: 36px;
+  border-radius: 6px;
 }
 
-.password-toggle-btn:hover {
+.user-form .password-toggle-btn:hover {
   opacity: 1;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
+  background: rgba(99, 102, 241, 0.1);
 }
 
 @media (max-width: 768px) {
