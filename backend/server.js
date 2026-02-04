@@ -35,7 +35,10 @@ const corsOptions = {
     }
   },
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 };
 
 // Middleware
@@ -68,6 +71,9 @@ app.use('/api/tasks', require('./routes/taskRoutes'));
 app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/files', require('./routes/fileRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+
+// Admin Routes (Admin Panel Frontend)
+app.use('/api/admin/leads', require('./routes/admin/adminLeadRoutes'));
 
 // Health check
 app.get('/health', (req, res) => {
