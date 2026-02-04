@@ -52,6 +52,12 @@ function Layout({ children, setIsAuthenticated }) {
                 </Link>
               </li>
               <li>
+                <Link to="/leads" className={isActive('/leads') || location.pathname.startsWith('/leads/') ? 'active' : ''}>
+                  <span className="menu-icon">📝</span>
+                  Leads
+                </Link>
+              </li>
+              <li>
                 <Link to="/activity-logs" className={isActive('/activity-logs') ? 'active' : ''}>
                   <span className="menu-icon">📋</span>
                   Activity Logs
@@ -63,12 +69,6 @@ function Layout({ children, setIsAuthenticated }) {
           <div className="menu-section">
             <div className="menu-section-title">Coming Soon</div>
             <ul>
-              <li>
-                <Link to="#" style={{opacity: 0.5, cursor: 'not-allowed'}}>
-                  <span className="menu-icon">📝</span>
-                  Leads
-                </Link>
-              </li>
               <li>
                 <Link to="#" style={{opacity: 0.5, cursor: 'not-allowed'}}>
                   <span className="menu-icon">💰</span>

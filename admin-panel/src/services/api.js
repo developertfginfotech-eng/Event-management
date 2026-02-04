@@ -56,4 +56,14 @@ export const bulkImportUsers = (users) => api.post('/users/bulk-import', { users
 export const getActivityLogs = (params) => api.get('/activity-logs', { params })
 export const getActivityStats = () => api.get('/activity-logs/stats')
 
+// Admin Leads
+export const getAllLeads = (params) => api.get('/admin/leads', { params })
+export const getLeadById = (id) => api.get(`/admin/leads/${id}`)
+export const assignLead = (id, userId) => api.post(`/admin/leads/${id}/assign`, { userId })
+export const bulkImportLeads = (sourceId, leads) => api.post('/admin/leads/bulk-import', { sourceId, leads })
+export const deleteLead = (id) => api.delete(`/admin/leads/${id}`)
+export const getEventReport = (sourceId) => api.get(`/admin/leads/reports/source/${sourceId}`)
+export const exportLeadsToExcel = (params) => api.get('/admin/leads/export/excel', { params, responseType: 'blob' })
+export const exportLeadsToCSV = (params) => api.get('/admin/leads/export/csv', { params, responseType: 'blob' })
+
 export default api

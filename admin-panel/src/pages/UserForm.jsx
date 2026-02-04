@@ -20,6 +20,7 @@ function UserForm() {
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     if (isEdit) {
@@ -127,15 +128,25 @@ function UserForm() {
 
           <div className="form-group">
             <label>Password {!isEdit && '*'}</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required={!isEdit}
-              placeholder={isEdit ? "Leave blank to keep current password" : "Min 6 characters"}
-              minLength="6"
-            />
+            <div className="password-input-wrapper">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required={!isEdit}
+                placeholder={isEdit ? "Leave blank to keep current password" : "Min 6 characters"}
+                minLength="6"
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? '👁️' : '👁️‍🗨️'}
+              </button>
+            </div>
             {isEdit && <small style={{color: '#6b7280', fontSize: '12px'}}>Leave blank to keep current password</small>}
           </div>
         </div>
