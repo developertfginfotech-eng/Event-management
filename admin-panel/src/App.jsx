@@ -10,6 +10,7 @@ import UserForm from './pages/UserForm'
 import BulkUserImport from './pages/BulkUserImport'
 import ActivityLogs from './pages/ActivityLogs'
 import Leads from './pages/Leads'
+import LeadDetails from './pages/LeadDetails'
 import Layout from './components/Layout'
 
 function App() {
@@ -116,6 +117,14 @@ function App() {
           <ProtectedRoute>
             <Layout setIsAuthenticated={setIsAuthenticated}>
               <Leads />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/leads/:id" element={
+          <ProtectedRoute>
+            <Layout setIsAuthenticated={setIsAuthenticated}>
+              <LeadDetails />
             </Layout>
           </ProtectedRoute>
         } />
