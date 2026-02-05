@@ -56,15 +56,28 @@ export const bulkImportUsers = (users) => api.post('/users/bulk-import', { users
 export const getActivityLogs = (params) => api.get('/activity-logs', { params })
 export const getActivityStats = () => api.get('/activity-logs/stats')
 
+// Leads
+export const createLead = (data) => api.post('/leads', data)
+export const getLead = (id) => api.get(`/leads/${id}`)
+export const updateLead = (id, data) => api.put(`/leads/${id}`, data)
+export const addNoteToLead = (id, text) => api.post(`/leads/${id}/notes`, { text })
+
 // Admin Leads
 export const getAllLeads = (params) => api.get('/admin/leads', { params })
 export const getLeadById = (id) => api.get(`/admin/leads/${id}`)
+export const createLeadAdmin = (data) => api.post('/admin/leads', data)
+export const updateLeadAdmin = (id, data) => api.put(`/admin/leads/${id}`, data)
+export const addAttachmentsToLead = (id, attachments) => api.post(`/admin/leads/${id}/attachments`, { attachments })
 export const assignLead = (id, userId) => api.post(`/admin/leads/${id}/assign`, { userId })
 export const bulkImportLeads = (sourceId, leads) => api.post('/admin/leads/bulk-import', { sourceId, leads })
 export const deleteLead = (id) => api.delete(`/admin/leads/${id}`)
 export const getEventReport = (sourceId) => api.get(`/admin/leads/reports/source/${sourceId}`)
 export const exportLeadsToExcel = (params) => api.get('/admin/leads/export/excel', { params, responseType: 'blob' })
 export const exportLeadsToCSV = (params) => api.get('/admin/leads/export/csv', { params, responseType: 'blob' })
+
+// Expenses
+export const createExpense = (data) => api.post('/expenses', data)
+export const updateExpense = (id, data) => api.put(`/expenses/${id}`, data)
 
 // Admin Expenses
 export const getExpenses = (params) => api.get('/admin/expenses', { params })
@@ -92,5 +105,28 @@ export const deleteTask = (id) => api.delete(`/tasks/${id}`)
 
 // Dashboard
 export const getAdminDashboard = () => api.get('/dashboard/admin')
+
+// Files
+export const uploadFiles = (files) => {
+  const formData = new FormData()
+  files.forEach(file => {
+    formData.append('files', file)
+  })
+  return api.post('/files/upload-multiple', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+// Daily Reports
+export const getDailyReports = (params) => api.get('/daily-reports', { params })
+export const getDailyReport = (id) => api.get(`/daily-reports/${id}`)
+export const createDailyReport = (data) => api.post('/daily-reports', data)
+export const updateDailyReport = (id, data) => api.put(`/daily-reports/${id}`, data)
+export const submitDailyReport = (id, data) => api.put(`/daily-reports/${id}/submit`, data)
+export const reviewDailyReport = (id, data) => api.put(`/daily-reports/${id}/review`, data)
+export const deleteDailyReport = (id) => api.delete(`/daily-reports/${id}`)
+export const getDailyReportSummary = (userId) => api.get(`/daily-reports/summary/${userId || ''}`)
 
 export default api

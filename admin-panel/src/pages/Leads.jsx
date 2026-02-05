@@ -162,6 +162,9 @@ function Leads() {
       <div className="page-header">
         <h1>Lead Management</h1>
         <div className="header-actions">
+          <button onClick={() => navigate('/leads/new')} className="btn-primary">
+            + Add Lead
+          </button>
           <button onClick={handleExportExcel} className="btn-secondary">
             📊 Export Excel
           </button>
@@ -289,6 +292,13 @@ function Leads() {
                           title="View Details"
                         >
                           👁️
+                        </button>
+                        <button
+                          onClick={() => navigate(`/leads/edit/${lead._id}`)}
+                          className="btn-icon"
+                          title="Edit"
+                        >
+                          ✏️
                         </button>
                         <button
                           onClick={() => {

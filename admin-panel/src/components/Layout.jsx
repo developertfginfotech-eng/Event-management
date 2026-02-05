@@ -76,6 +76,12 @@ function Layout({ children, setIsAuthenticated }) {
                 </Link>
               </li>
               <li>
+                <Link to="/daily-reports" className={isActive('/daily-reports') || location.pathname.startsWith('/daily-reports/') ? 'active' : ''}>
+                  <span className="menu-icon">📊</span>
+                  Daily Reports
+                </Link>
+              </li>
+              <li>
                 <Link to="/activity-logs" className={isActive('/activity-logs') ? 'active' : ''}>
                   <span className="menu-icon">📜</span>
                   Activity Logs

@@ -71,6 +71,7 @@ app.use('/api/tasks', require('./routes/taskRoutes'));
 app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/files', require('./routes/fileRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+app.use('/api/daily-reports', require('./routes/dailyReportRoutes'));
 
 // Admin Routes (Admin Panel Frontend)
 app.use('/api/admin/leads', require('./routes/admin/adminLeadRoutes'));

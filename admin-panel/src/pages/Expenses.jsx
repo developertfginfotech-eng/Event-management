@@ -175,6 +175,9 @@ function Expenses() {
       <div className="page-header">
         <h1>Expense Management</h1>
         <div className="header-actions">
+          <button onClick={() => navigate('/expenses/new')} className="btn-primary">
+            + Add Expense
+          </button>
           <button onClick={handleExportToExcel} className="btn-secondary">
             📥 Export to Excel
           </button>

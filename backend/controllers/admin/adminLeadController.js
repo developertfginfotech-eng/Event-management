@@ -5,6 +5,241 @@ const ExcelJS = require('exceljs');
 const { Parser } = require('json2csv');
 const PDFDocument = require('pdfkit');
 
+// @desc    Create new lead
+// @route   POST /api/admin/leads
+// @access  Private (canViewAllLeads)
+exports.createLead = async (req, res, next) => {
+  try {
+    const {
+      name,
+      email,
+      phones,
+      designation,
+      linkedin,
+      company,
+      location,
+      website,
+      socialLinks,
+      industry,
+      serviceInterestedIn,
+      briefRequirement,
+      interestedIn,
+      interestedInOther,
+      source,
+      priority,
+      status,
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !company || !source || !phones || phones.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide name, company, source (event), and at least one phone number',
+      });
+    }
+
+    // Verify event exists
+    const event = await Event.findById(source);
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found',
+      });
+    }
+
+    // Check for duplicate email or phone for this event
+    if (email) {
+      const existingByEmail = await Lead.findOne({ email, source });
+      if (existingByEmail) {
+        return res.status(400).json({
+          success: false,
+          message: 'Lead with this email already exists for this event',
+        });
+      }
+    }
+
+    const primaryPhone = phones.find((p) => p.isPrimary) || phones[0];
+    const existingByPhone = await Lead.findOne({
+      phone: primaryPhone.number,
+      source,
+    });
+    if (existingByPhone) {
+      return res.status(400).json({
+        success: false,
+        message: 'Lead with this phone number already exists for this event',
+      });
+    }
+
+    // Create lead
+    const lead = await Lead.create({
+      name,
+      email,
+      phones,
+      designation,
+      linkedin,
+      company,
+      location,
+      website,
+      socialLinks,
+      industry,
+      serviceInterestedIn,
+      briefRequirement,
+      interestedIn,
+      interestedInOther,
+      source,
+      priority: priority || 'Medium',
+      status: status || 'New',
+      createdBy: req.user.id,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Lead created successfully',
+      data: lead,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Update lead
+// @route   PUT /api/admin/leads/:id
+// @access  Private (canViewAllLeads)
+exports.updateLead = async (req, res, next) => {
+  try {
+    let lead = await Lead.findById(req.params.id);
+
+    if (!lead) {
+      return res.status(404).json({
+        success: false,
+        message: 'Lead not found',
+      });
+    }
+
+    const {
+      name,
+      email,
+      phones,
+      designation,
+      linkedin,
+      company,
+      location,
+      website,
+      socialLinks,
+      industry,
+      serviceInterestedIn,
+      briefRequirement,
+      interestedIn,
+      interestedInOther,
+      source,
+      priority,
+      status,
+    } = req.body;
+
+    // If email is being changed, check for duplicates
+    if (email && email !== lead.email) {
+      const existingByEmail = await Lead.findOne({
+        email,
+        source: source || lead.source,
+        _id: { $ne: lead._id },
+      });
+      if (existingByEmail) {
+        return res.status(400).json({
+          success: false,
+          message: 'Lead with this email already exists for this event',
+        });
+      }
+    }
+
+    // If primary phone is being changed, check for duplicates
+    if (phones && phones.length > 0) {
+      const primaryPhone = phones.find((p) => p.isPrimary) || phones[0];
+      if (primaryPhone.number !== lead.phone) {
+        const existingByPhone = await Lead.findOne({
+          phone: primaryPhone.number,
+          source: source || lead.source,
+          _id: { $ne: lead._id },
+        });
+        if (existingByPhone) {
+          return res.status(400).json({
+            success: false,
+            message: 'Lead with this phone number already exists for this event',
+          });
+        }
+      }
+    }
+
+    lead = await Lead.findByIdAndUpdate(
+      req.params.id,
+      {
+        name,
+        email,
+        phones,
+        designation,
+        linkedin,
+        company,
+        location,
+        website,
+        socialLinks,
+        industry,
+        serviceInterestedIn,
+        briefRequirement,
+        interestedIn,
+        interestedInOther,
+        source,
+        priority,
+        status,
+      },
+      { new: true, runValidators: true }
+    ).populate('source', 'name startDate endDate location');
+
+    res.status(200).json({
+      success: true,
+      message: 'Lead updated successfully',
+      data: lead,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Add attachments to lead
+// @route   POST /api/admin/leads/:id/attachments
+// @access  Private (canViewAllLeads)
+exports.addAttachment = async (req, res, next) => {
+  try {
+    const { attachments } = req.body;
+
+    if (!attachments || !Array.isArray(attachments) || attachments.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide attachments array',
+      });
+    }
+
+    const lead = await Lead.findById(req.params.id);
+
+    if (!lead) {
+      return res.status(404).json({
+        success: false,
+        message: 'Lead not found',
+      });
+    }
+
+    // Add attachments to lead
+    lead.attachments.push(...attachments);
+    await lead.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Attachments added successfully',
+      data: lead,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // @desc    Get all leads (Admin/Manager view - no filtering)
 // @route   GET /api/admin/leads
 // @access  Private (canViewAllLeads)

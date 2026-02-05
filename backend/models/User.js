@@ -106,15 +106,16 @@ userSchema.pre('save', function (next) {
     };
   } else if (this.role === 'Manager') {
     this.permissions = {
-      canManageEvents: false,
+      canManageEvents: true,
       canManageUsers: false,
       canViewAllLeads: true,
       canApproveExpenses: true,
       canViewReports: true,
     };
   } else {
+    // Field User permissions
     this.permissions = {
-      canManageEvents: false,
+      canManageEvents: true,
       canManageUsers: false,
       canViewAllLeads: false,
       canApproveExpenses: false,

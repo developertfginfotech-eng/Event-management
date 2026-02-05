@@ -2,6 +2,9 @@ const express = require('express');
 const {
   getAllLeads,
   getLeadById,
+  createLead,
+  updateLead,
+  addAttachment,
   assignLead,
   bulkImportLeads,
   deleteLead,
@@ -22,8 +25,17 @@ router.use(checkPermission('canViewAllLeads'));
 // View all leads (Admin/Manager only)
 router.get('/', getAllLeads);
 
+// Create new lead
+router.post('/', createLead);
+
 // View single lead
 router.get('/:id', getLeadById);
+
+// Update lead
+router.put('/:id', updateLead);
+
+// Add attachments to lead
+router.post('/:id/attachments', addAttachment);
 
 // Assign lead to user
 router.post('/:id/assign', assignLead);

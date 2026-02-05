@@ -11,11 +11,15 @@ import BulkUserImport from './pages/BulkUserImport'
 import ActivityLogs from './pages/ActivityLogs'
 import Leads from './pages/Leads'
 import LeadDetails from './pages/LeadDetails'
+import LeadForm from './pages/LeadForm'
 import Expenses from './pages/Expenses'
+import ExpenseForm from './pages/ExpenseForm'
 import ExpenseReports from './pages/ExpenseReports'
 import Attendance from './pages/Attendance'
 import Tasks from './pages/Tasks'
 import TaskForm from './pages/TaskForm'
+import DailyReports from './pages/DailyReports'
+import DailyReportForm from './pages/DailyReportForm'
 import Layout from './components/Layout'
 
 function App() {
@@ -126,6 +130,22 @@ function App() {
           </ProtectedRoute>
         } />
 
+        <Route path="/leads/new" element={
+          <ProtectedRoute>
+            <Layout setIsAuthenticated={setIsAuthenticated}>
+              <LeadForm />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/leads/edit/:id" element={
+          <ProtectedRoute>
+            <Layout setIsAuthenticated={setIsAuthenticated}>
+              <LeadForm />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
         <Route path="/leads/:id" element={
           <ProtectedRoute>
             <Layout setIsAuthenticated={setIsAuthenticated}>
@@ -138,6 +158,22 @@ function App() {
           <ProtectedRoute>
             <Layout setIsAuthenticated={setIsAuthenticated}>
               <Expenses />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/expenses/new" element={
+          <ProtectedRoute>
+            <Layout setIsAuthenticated={setIsAuthenticated}>
+              <ExpenseForm />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/expenses/edit/:id" element={
+          <ProtectedRoute>
+            <Layout setIsAuthenticated={setIsAuthenticated}>
+              <ExpenseForm />
             </Layout>
           </ProtectedRoute>
         } />
@@ -178,6 +214,38 @@ function App() {
           <ProtectedRoute>
             <Layout setIsAuthenticated={setIsAuthenticated}>
               <TaskForm />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/daily-reports" element={
+          <ProtectedRoute>
+            <Layout setIsAuthenticated={setIsAuthenticated}>
+              <DailyReports />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/daily-reports/new" element={
+          <ProtectedRoute>
+            <Layout setIsAuthenticated={setIsAuthenticated}>
+              <DailyReportForm />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/daily-reports/edit/:id" element={
+          <ProtectedRoute>
+            <Layout setIsAuthenticated={setIsAuthenticated}>
+              <DailyReportForm />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/daily-reports/:id" element={
+          <ProtectedRoute>
+            <Layout setIsAuthenticated={setIsAuthenticated}>
+              <DailyReports />
             </Layout>
           </ProtectedRoute>
         } />
