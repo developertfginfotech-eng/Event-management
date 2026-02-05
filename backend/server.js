@@ -74,6 +74,7 @@ app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 
 // Admin Routes (Admin Panel Frontend)
 app.use('/api/admin/leads', require('./routes/admin/adminLeadRoutes'));
+app.use('/api/admin/expenses', require('./routes/admin/adminExpenseRoutes'));
 
 // Health check
 app.get('/health', (req, res) => {

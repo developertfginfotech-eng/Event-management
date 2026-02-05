@@ -1,4 +1,5 @@
 const Expense = require('../models/Expense');
+const mongoose = require('mongoose');
 
 // @desc    Get all expenses
 // @route   GET /api/expenses
@@ -62,7 +63,7 @@ exports.getExpense = async (req, res, next) => {
     // Check if user has permission to view this expense
     if (
       !req.user.permissions.canViewReports &&
-      expense.user.toString() !== req.user._id.toString()
+      expense.user._id.toString() !== req.user._id.toString()
     ) {
       return res.status(403).json({
         success: false,
@@ -218,7 +219,7 @@ exports.reviewExpense = async (req, res, next) => {
 exports.getExpenseSummary = async (req, res, next) => {
   try {
     const summary = await Expense.aggregate([
-      { $match: { event: req.params.eventId } },
+      { $match: { event: new mongoose.Types.ObjectId(req.params.eventId) } },
       {
         $group: {
           _id: '$category',

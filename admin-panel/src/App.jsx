@@ -11,6 +11,8 @@ import BulkUserImport from './pages/BulkUserImport'
 import ActivityLogs from './pages/ActivityLogs'
 import Leads from './pages/Leads'
 import LeadDetails from './pages/LeadDetails'
+import Expenses from './pages/Expenses'
+import ExpenseReports from './pages/ExpenseReports'
 import Layout from './components/Layout'
 
 function App() {
@@ -125,6 +127,22 @@ function App() {
           <ProtectedRoute>
             <Layout setIsAuthenticated={setIsAuthenticated}>
               <LeadDetails />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/expenses" element={
+          <ProtectedRoute>
+            <Layout setIsAuthenticated={setIsAuthenticated}>
+              <Expenses />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/expenses/reports" element={
+          <ProtectedRoute>
+            <Layout setIsAuthenticated={setIsAuthenticated}>
+              <ExpenseReports />
             </Layout>
           </ProtectedRoute>
         } />

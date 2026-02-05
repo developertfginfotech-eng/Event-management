@@ -506,5 +506,1506 @@ GET /api/leads/export/excel?status=Contacted
 - [ ] Export to CSV
 - [ ] Delete lead
 
+---
+---
+
+# 💰 Expense Management API Reference
+
+---
+
+## 🎯 API Overview
+
+The Expense Management system has **two separate API endpoints**:
+
+### 👤 User/Mobile APIs (`/api/expenses`)
+**Purpose:** For regular users (mobile app/field staff) to manage their own expenses
+- Create, view, update, delete own expenses
+- Only see their own expenses
+- Can only edit/delete pending expenses
+- Get expense summaries for events
+
+### 🔐 Admin APIs (`/api/admin/expenses`)
+**Purpose:** For admin panel to manage all expenses across the organization
+- View **ALL** expenses from all users
+- Approve/Reject expenses
+- Delete any expense
+- Generate comprehensive reports (by event, user, category)
+- Export to Excel
+- Advanced filtering and analytics
+
+---
+
+# 👤 USER/MOBILE APIs
+
+Base URL: `http://localhost:5003/api/expenses`
+
+---
+
+## 🔐 Authentication
+
+All endpoints require Bearer token:
+```
+Authorization: Bearer YOUR_TOKEN
+```
+
+---
+
+## 📝 Create Expense (Mobile User)
+
+**POST** `/api/expenses`
+
+**Body:**
+```json
+{
+  "amount": 1500,
+  "category": "Travel",
+  "subCategory": "Cab",
+  "description": "Uber from airport to hotel",
+  "date": "2024-02-05T10:30:00Z",
+  "event": "EVENT_ID",
+  "receipt": "/uploads/receipt-123.jpg",
+  "paymentMethod": "UPI",
+  "billNumber": "BILL-001"
+}
+```
+
+**Required Fields:**
+- `amount` (Number, min: 0)
+- `category` (Travel/Food/Stay/Misc)
+- `description` (String, max 500 chars)
+- `date` (Date)
+- `event` (Event ObjectId)
+
+**Optional Fields:**
+- `subCategory` (Cab/Train/Flight/Bus/Other)
+- `receipt` (String - file URL)
+- `paymentMethod` (Cash/Card/UPI/Bank Transfer/Other)
+- `billNumber` (String)
+
+**Note:** `user` field is auto-filled from logged-in user's ID
+
+---
+
+## 📋 Get My Expenses
+
+**GET** `/api/expenses`
+
+**Query Parameters:**
+- `event` - Filter by event ID
+- `category` - Filter by category
+- `status` - Filter by status (Pending/Approved/Rejected)
+- `startDate` - Filter from date (YYYY-MM-DD)
+- `endDate` - Filter to date (YYYY-MM-DD)
+
+**Examples:**
+```
+GET /api/expenses
+GET /api/expenses?event=EVENT_ID
+GET /api/expenses?status=Pending
+GET /api/expenses?category=Travel&status=Approved
+GET /api/expenses?startDate=2024-02-01&endDate=2024-02-28
+```
+
+**Returns:** Only expenses created by the logged-in user
+
+---
+
+## 👤 Get Single Expense
+
+**GET** `/api/expenses/:id`
+
+**Example:**
+```
+GET /api/expenses/65abc123def456789
+```
+
+**Note:** Users can only view their own expenses
+
+---
+
+## ✏️ Update Expense
+
+**PUT** `/api/expenses/:id`
+
+**Body:**
+```json
+{
+  "amount": 2000,
+  "description": "Updated: Uber from airport to hotel with waiting charges"
+}
+```
+
+**Restrictions:**
+- Users can **only update their own expenses**
+- Can **only update expenses with status "Pending"**
+- Cannot update approved/rejected expenses
+
+---
+
+## 🗑️ Delete Expense
+
+**DELETE** `/api/expenses/:id`
+
+**Restrictions:**
+- Users can **only delete their own expenses**
+- Can **only delete expenses with status "Pending"**
+- Cannot delete approved/rejected expenses
+
+---
+
+## 📊 Get Expense Summary (Event-wise)
+
+**GET** `/api/expenses/summary/:eventId`
+
+**Example:**
+```
+GET /api/expenses/summary/6981f35a75abdaecf610b757
+```
+
+**Returns:**
+Aggregated expense summary by category for the event:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "Travel",
+      "totalAmount": 5000,
+      "count": 10,
+      "approved": 3000,
+      "pending": 2000,
+      "rejected": 0
+    },
+    {
+      "_id": "Food",
+      "totalAmount": 2500,
+      "count": 5,
+      "approved": 2500,
+      "pending": 0,
+      "rejected": 0
+    }
+  ]
+}
+```
+
+---
+
+# 🔐 ADMIN APIs
+
+Base URL: `http://localhost:5003/api/admin/expenses`
+
+**Required Permission:** `canApproveExpenses` (Manager/Admin roles)
+
+---
+
+## 📋 Get All Expenses (Admin View)
+
+**GET** `/api/admin/expenses`
+
+**Query Parameters:**
+- `event` - Filter by event ID
+- `user` - Filter by user ID
+- `status` - Filter by status
+- `category` - Filter by category
+- `search` - Search in description
+- `startDate` - Filter from date
+- `endDate` - Filter to date
+
+**Examples:**
+```
+GET /api/admin/expenses
+GET /api/admin/expenses?status=Pending
+GET /api/admin/expenses?event=EVENT_ID&status=Pending
+GET /api/admin/expenses?user=USER_ID
+GET /api/admin/expenses?search=uber
+```
+
+**Returns:** **ALL** expenses from all users (no user filtering)
+
+---
+
+## 👤 Get Single Expense (Admin View)
+
+**GET** `/api/admin/expenses/:id`
+
+**Example:**
+```
+GET /api/admin/expenses/65abc123def456789
+```
+
+**Returns:** Full expense details with event, user, and approver information
+
+---
+
+## ✅ Review Expense (Approve/Reject)
+
+**PUT** `/api/admin/expenses/:id/review`
+
+**Body:**
+```json
+{
+  "status": "Approved",
+  "adminComments": "Approved. Receipt verified."
+}
+```
+
+**OR**
+
+```json
+{
+  "status": "Rejected",
+  "adminComments": "Receipt not clear. Please resubmit with proper bill."
+}
+```
+
+**Required Fields:**
+- `status` - Must be "Approved" or "Rejected"
+
+**Optional Fields:**
+- `adminComments` - Admin's review notes
+
+**Note:**
+- Sets `approvedBy` to current admin's ID
+- Sets `approvedAt` to current timestamp
+- Required permission: `canApproveExpenses`
+
+---
+
+## 🗑️ Delete Expense (Admin)
+
+**DELETE** `/api/admin/expenses/:id`
+
+**Required Role:** Admin or Super Admin
+
+**Example:**
+```
+DELETE /api/admin/expenses/65abc123def456789
+```
+
+**Note:** Admin can delete any expense regardless of status
+
+---
+
+## 📊 Get Expenses by Event (Report)
+
+**GET** `/api/admin/expenses/reports/event/:eventId`
+
+**Example:**
+```
+GET /api/admin/expenses/reports/event/6981f35a75abdaecf610b757
+```
+
+**Returns:**
+```json
+{
+  "success": true,
+  "data": {
+    "event": {
+      "id": "6981f35a75abdaecf610b757",
+      "name": "Tech Expo 2024",
+      "startDate": "2024-02-10",
+      "endDate": "2024-02-12"
+    },
+    "stats": {
+      "total": 50,
+      "totalAmount": 125000,
+      "byStatus": {
+        "Pending": 10,
+        "Approved": 35,
+        "Rejected": 5
+      },
+      "byCategory": {
+        "Travel": 20,
+        "Food": 15,
+        "Stay": 10,
+        "Misc": 5
+      },
+      "byUser": {
+        "John Doe": 25000,
+        "Jane Smith": 30000
+      },
+      "pendingAmount": 20000,
+      "approvedAmount": 100000,
+      "rejectedAmount": 5000
+    },
+    "expenses": [...]
+  }
+}
+```
+
+---
+
+## 📊 Get Expenses by User (Report)
+
+**GET** `/api/admin/expenses/reports/user/:userId`
+
+**Example:**
+```
+GET /api/admin/expenses/reports/user/USER_ID
+```
+
+**Returns:**
+User's expense report with total amount, status breakdown, and category distribution
+
+---
+
+## 📊 Get Expenses by Category (Report)
+
+**GET** `/api/admin/expenses/reports/category/:category`
+
+**Category Options:** Travel, Food, Stay, Misc
+
+**Example:**
+```
+GET /api/admin/expenses/reports/category/Travel
+```
+
+**Returns:**
+All expenses in that category with stats and amount breakdown
+
+---
+
+## 📥 Export to Excel (Admin)
+
+**GET** `/api/admin/expenses/export/excel`
+
+**Query Parameters:** (Optional filters)
+- `event` - Filter by event ID
+- `user` - Filter by user ID
+- `status` - Filter by status
+- `category` - Filter by category
+
+**Examples:**
+```
+GET /api/admin/expenses/export/excel
+GET /api/admin/expenses/export/excel?status=Approved
+GET /api/admin/expenses/export/excel?event=EVENT_ID&status=Pending
+GET /api/admin/expenses/export/excel?user=USER_ID
+```
+
+**Returns:** Excel file (.xlsx) with columns:
+- Date
+- User
+- Event
+- Category
+- Sub-Category
+- Description
+- Amount (₹)
+- Status
+- Approved By
+- Admin Comments
+
+**File Format:** `expenses-{timestamp}.xlsx`
+
+---
+
+## 📊 Expense Field Values
+
+### Expense Fields:
+- **Amount** (Number, Required, Min: 0)
+- **Category** (Enum, Required)
+- **SubCategory** (Enum, Optional)
+- **Description** (String, Required, Max: 500 chars)
+- **Date** (Date, Required)
+- **Event** (Event ObjectId, Required)
+- **User** (User ObjectId, Auto-filled)
+- **Receipt** (String - File URL)
+- **Status** (Enum, Default: Pending)
+- **Payment Method** (Enum)
+- **Bill Number** (String)
+- **Approved By** (User ObjectId)
+- **Approved At** (Date)
+- **Admin Comments** (String)
+
+### Category Options:
+- `Travel` - Transportation expenses
+- `Food` - Meals and refreshments
+- `Stay` - Accommodation
+- `Misc` - Other expenses
+
+### SubCategory Options:
+- `Cab` - Taxi/Uber/Ola
+- `Train` - Railway
+- `Flight` - Air travel
+- `Bus` - Bus travel
+- `Other` - Other transport
+
+### Status Options:
+- `Pending` - Awaiting approval (default)
+- `Approved` - Approved by admin
+- `Rejected` - Rejected by admin
+
+### Payment Method Options:
+- `Cash`
+- `Card`
+- `UPI`
+- `Bank Transfer`
+- `Other`
+
+---
+
+## 🧪 Quick Test Flow (User APIs)
+
+1. **Login as User:**
+```bash
+POST /api/auth/login
+{
+  "email": "user@gmail.com",
+  "password": "user123"
+}
+```
+
+2. **Create Expense:**
+```bash
+POST /api/expenses
+{
+  "amount": 500,
+  "category": "Food",
+  "description": "Team lunch at restaurant",
+  "date": "2024-02-05T13:00:00Z",
+  "event": "EVENT_ID",
+  "paymentMethod": "Cash"
+}
+```
+
+3. **View My Expenses:**
+```bash
+GET /api/expenses
+```
+
+4. **Update Pending Expense:**
+```bash
+PUT /api/expenses/EXPENSE_ID
+{
+  "amount": 600,
+  "description": "Team lunch at restaurant with dessert"
+}
+```
+
+5. **Get Event Summary:**
+```bash
+GET /api/expenses/summary/EVENT_ID
+```
+
+---
+
+## 🧪 Quick Test Flow (Admin APIs)
+
+1. **Login as Admin:**
+```bash
+POST /api/auth/login
+{
+  "email": "admin@gmail.com",
+  "password": "admin123"
+}
+```
+
+2. **View All Pending Expenses:**
+```bash
+GET /api/admin/expenses?status=Pending
+```
+
+3. **Review Expense (Approve):**
+```bash
+PUT /api/admin/expenses/EXPENSE_ID/review
+{
+  "status": "Approved",
+  "adminComments": "Verified. Approved for reimbursement."
+}
+```
+
+4. **Get Event Report:**
+```bash
+GET /api/admin/expenses/reports/event/EVENT_ID
+```
+
+5. **Export to Excel:**
+```bash
+GET /api/admin/expenses/export/excel?event=EVENT_ID&status=Approved
+```
+
+---
+
+## 🔑 Key Differences: User vs Admin APIs
+
+| Feature | User APIs (`/api/expenses`) | Admin APIs (`/api/admin/expenses`) |
+|---------|----------------------------|-----------------------------------|
+| **View Scope** | Only own expenses | ALL users' expenses |
+| **Create** | ✅ Yes | ❌ No (users create) |
+| **Update** | ✅ Only own pending | ❌ No |
+| **Delete** | ✅ Only own pending | ✅ Any expense (Admin/Super Admin) |
+| **Approve/Reject** | ❌ No | ✅ Yes (canApproveExpenses) |
+| **Reports** | Basic summary | ✅ Comprehensive (event/user/category) |
+| **Export** | ❌ No | ✅ Excel export |
+| **Filtering** | Limited (own data) | ✅ Advanced (all filters) |
+| **Permission** | Any authenticated user | `canApproveExpenses` required |
+
+---
+
+## ✅ Expense Testing Checklist
+
+### User/Mobile APIs:
+- [ ] Create expense with receipt
+- [ ] Get all my expenses
+- [ ] Get single expense
+- [ ] Update pending expense
+- [ ] Try to update approved expense (should fail)
+- [ ] Delete pending expense
+- [ ] Try to delete approved expense (should fail)
+- [ ] Get expense summary for event
+- [ ] Try to view another user's expense (should fail)
+
+### Admin APIs:
+- [ ] View all expenses from all users
+- [ ] Filter by event/user/status/category
+- [ ] Search expenses by description
+- [ ] View single expense details
+- [ ] Approve expense with comments
+- [ ] Reject expense with reason
+- [ ] Delete any expense
+- [ ] Generate event report
+- [ ] Generate user report
+- [ ] Generate category report
+- [ ] Export to Excel (all expenses)
+- [ ] Export to Excel (filtered by event)
+- [ ] Export to Excel (filtered by status)
+
+---
+
+# 📅 Attendance & Check-in API Reference
+
+---
+
+## 🎯 API Overview
+
+The Attendance system has a **single API endpoint** with role-based access control:
+
+### 📱 User/Mobile APIs (`/api/attendance`)
+**Purpose:** For regular users (mobile app/field staff) to manage their own attendance
+- Check-in/check-out for events
+- View own attendance records
+- Track work hours
+- Upload selfie verification
+- Get personal attendance summary
+
+### 🔐 Admin View (Same endpoint with elevated permissions)
+**Purpose:** Admins with `canViewReports` permission can:
+- View **ALL** users' attendance records
+- Filter by user, event, date
+- Generate attendance reports
+- Monitor team attendance
+
+---
+
+# 📱 USER/MOBILE APIs
+
+Base URL: `http://localhost:5003/api/attendance`
+
+---
+
+## 🔐 Authentication
+
+All endpoints require Bearer token:
+```
+Authorization: Bearer YOUR_TOKEN
+```
+
+---
+
+## ✅ Check In (Mobile User)
+
+**POST** `/api/attendance/checkin`
+
+**Body:**
+```json
+{
+  "event": "EVENT_ID",
+  "checkIn": {
+    "time": "2024-02-05T09:00:00Z",
+    "location": {
+      "latitude": 28.7041,
+      "longitude": 77.1025,
+      "address": "Connaught Place, New Delhi"
+    },
+    "selfie": "/uploads/selfie-123.jpg"
+  },
+  "notes": "Arrived on time"
+}
+```
+
+**Required Fields:**
+- `event` (Event ObjectId) - Event reference
+- `checkIn.time` (Date) - Check-in timestamp
+
+**Optional Fields:**
+- `checkIn.location` - GPS coordinates and address
+  - `latitude` (Number)
+  - `longitude` (Number)
+  - `address` (String)
+- `checkIn.selfie` (String) - Selfie image URL
+- `notes` (String) - Additional notes
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "65abc123def456789",
+    "user": "USER_ID",
+    "event": "EVENT_ID",
+    "date": "2024-02-05T00:00:00Z",
+    "checkIn": {
+      "time": "2024-02-05T09:00:00Z",
+      "location": {
+        "latitude": 28.7041,
+        "longitude": 77.1025,
+        "address": "Connaught Place, New Delhi"
+      },
+      "selfie": "/uploads/selfie-123.jpg"
+    },
+    "status": "Present",
+    "workHours": 0
+  }
+}
+```
+
+**Note:** User field is auto-filled from logged-in user's ID
+
+---
+
+## 🚪 Check Out
+
+**PUT** `/api/attendance/:id/checkout`
+
+**Body:**
+```json
+{
+  "checkOut": {
+    "time": "2024-02-05T18:00:00Z",
+    "location": {
+      "latitude": 28.7041,
+      "longitude": 77.1025,
+      "address": "Connaught Place, New Delhi"
+    }
+  }
+}
+```
+
+**Required Fields:**
+- `checkOut.time` (Date) - Check-out timestamp
+
+**Optional Fields:**
+- `checkOut.location` - GPS coordinates and address
+  - `latitude` (Number)
+  - `longitude` (Number)
+  - `address` (String)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "65abc123def456789",
+    "user": "USER_ID",
+    "event": "EVENT_ID",
+    "date": "2024-02-05T00:00:00Z",
+    "checkIn": {
+      "time": "2024-02-05T09:00:00Z"
+    },
+    "checkOut": {
+      "time": "2024-02-05T18:00:00Z"
+    },
+    "workHours": 9,
+    "status": "Present"
+  }
+}
+```
+
+**Note:** Work hours are automatically calculated when checkout is saved
+
+---
+
+## 📋 Get My Attendance Records
+
+**GET** `/api/attendance`
+
+**Query Parameters:**
+- `event` - Filter by event ID
+- `status` - Filter by status (Present/Absent/Half Day/Leave)
+- `startDate` - Filter from date (YYYY-MM-DD)
+- `endDate` - Filter to date (YYYY-MM-DD)
+
+**Examples:**
+```
+GET /api/attendance
+GET /api/attendance?event=EVENT_ID
+GET /api/attendance?status=Present
+GET /api/attendance?startDate=2024-02-01&endDate=2024-02-28
+```
+
+**Returns:** Only attendance records created by the logged-in user
+
+**Response:**
+```json
+{
+  "success": true,
+  "count": 15,
+  "data": [
+    {
+      "_id": "65abc123def456789",
+      "user": {
+        "_id": "USER_ID",
+        "name": "John Doe",
+        "email": "john@example.com"
+      },
+      "event": {
+        "_id": "EVENT_ID",
+        "name": "Tech Expo 2024"
+      },
+      "date": "2024-02-05T00:00:00Z",
+      "checkIn": {
+        "time": "2024-02-05T09:00:00Z",
+        "location": {
+          "latitude": 28.7041,
+          "longitude": 77.1025
+        }
+      },
+      "checkOut": {
+        "time": "2024-02-05T18:00:00Z"
+      },
+      "workHours": 9,
+      "status": "Present"
+    }
+  ]
+}
+```
+
+---
+
+## 👤 Get Single Attendance Record
+
+**GET** `/api/attendance/:id`
+
+**Example:**
+```
+GET /api/attendance/65abc123def456789
+```
+
+**Note:** Users can only view their own attendance records
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "65abc123def456789",
+    "user": {
+      "_id": "USER_ID",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "phone": "+1234567890"
+    },
+    "event": {
+      "_id": "EVENT_ID",
+      "name": "Tech Expo 2024",
+      "location": "India Gate, Delhi"
+    },
+    "date": "2024-02-05T00:00:00Z",
+    "checkIn": {
+      "time": "2024-02-05T09:00:00Z",
+      "location": {
+        "latitude": 28.7041,
+        "longitude": 77.1025,
+        "address": "Connaught Place, New Delhi"
+      },
+      "selfie": "/uploads/selfie-123.jpg"
+    },
+    "checkOut": {
+      "time": "2024-02-05T18:00:00Z",
+      "location": {
+        "latitude": 28.7041,
+        "longitude": 77.1025
+      }
+    },
+    "workHours": 9,
+    "status": "Present",
+    "notes": "Arrived on time"
+  }
+}
+```
+
+---
+
+## 📊 Get My Attendance Summary
+
+**GET** `/api/attendance/summary`
+
+Get personal attendance summary
+
+**Example:**
+```
+GET /api/attendance/summary
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "totalDays": 20,
+    "present": 18,
+    "absent": 1,
+    "halfDay": 1,
+    "leave": 0,
+    "totalWorkHours": 162,
+    "averageWorkHours": 8.1
+  }
+}
+```
+
+---
+
+# 🔐 ADMIN APIs
+
+Base URL: `http://localhost:5003/api/attendance`
+
+**Required Permission:** `canViewReports` (Manager/Admin roles)
+
+---
+
+## 📋 View All Attendance Records (Admin)
+
+**GET** `/api/attendance`
+
+**Query Parameters:**
+- `event` - Filter by event ID
+- `user` - Filter by specific user ID
+- `status` - Filter by status
+- `startDate` - Filter from date
+- `endDate` - Filter to date
+
+**Examples:**
+```
+GET /api/attendance (All users' attendance)
+GET /api/attendance?user=USER_ID
+GET /api/attendance?event=EVENT_ID&startDate=2024-02-01
+GET /api/attendance?status=Present&event=EVENT_ID
+```
+
+**Returns:** **ALL** attendance records from all users (no user filtering)
+
+**Response:**
+```json
+{
+  "success": true,
+  "count": 250,
+  "data": [
+    {
+      "_id": "65abc123def456789",
+      "user": {
+        "_id": "USER_ID",
+        "name": "John Doe",
+        "email": "john@example.com",
+        "role": "Field User"
+      },
+      "event": {
+        "_id": "EVENT_ID",
+        "name": "Tech Expo 2024"
+      },
+      "date": "2024-02-05T00:00:00Z",
+      "checkIn": {
+        "time": "2024-02-05T09:00:00Z",
+        "location": {
+          "latitude": 28.7041,
+          "longitude": 77.1025,
+          "address": "Connaught Place, New Delhi"
+        },
+        "selfie": "/uploads/selfie-123.jpg"
+      },
+      "checkOut": {
+        "time": "2024-02-05T18:00:00Z"
+      },
+      "workHours": 9,
+      "status": "Present"
+    }
+  ]
+}
+```
+
+---
+
+## 📊 Get User Attendance Summary (Admin)
+
+**GET** `/api/attendance/summary/:userId`
+
+Get attendance summary for a specific user
+
+**Example:**
+```
+GET /api/attendance/summary/6981e0a775abdaecf610b693
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "6981e0a775abdaecf610b693",
+      "name": "John Doe"
+    },
+    "totalDays": 20,
+    "present": 18,
+    "absent": 1,
+    "halfDay": 1,
+    "leave": 0,
+    "totalWorkHours": 162,
+    "averageWorkHours": 8.1
+  }
+}
+```
+
+---
+
+## 🧪 Quick Test Flow (Admin)
+
+1. **Login as Admin:**
+```bash
+POST /api/auth/login
+{
+  "email": "admin@gmail.com",
+  "password": "admin123"
+}
+```
+
+2. **View All Attendance:**
+```bash
+GET /api/attendance
+```
+
+3. **Filter by User:**
+```bash
+GET /api/attendance?user=USER_ID
+```
+
+4. **Filter by Event:**
+```bash
+GET /api/attendance?event=EVENT_ID&startDate=2024-02-01&endDate=2024-02-28
+```
+
+5. **Get User Summary:**
+```bash
+GET /api/attendance/summary/USER_ID
+```
+
+---
+
+## 🔑 Key Differences: User vs Admin APIs
+
+| Feature | User APIs | Admin APIs |
+|---------|-----------|------------|
+| **View Scope** | Only own attendance | ALL users' attendance |
+| **Check In** | ✅ Yes | ❌ Users check in themselves |
+| **Check Out** | ✅ Only own | ❌ Users check out themselves |
+| **Filter by User** | ❌ No | ✅ Yes |
+| **Summary** | Own summary only | ✅ Any user's summary |
+| **Permission** | Any authenticated user | `canViewReports` required |
+
+---
+
+## 📊 Attendance Field Values
+
+### Attendance Fields:
+- **User** (User ObjectId, Auto-filled, Required)
+- **Event** (Event ObjectId, Optional)
+- **Date** (Date, Required, Default: now)
+- **Check In** (Object, Required)
+  - `time` (Date, Required)
+  - `location` (Object)
+    - `latitude` (Number)
+    - `longitude` (Number)
+    - `address` (String)
+  - `selfie` (String - Image URL)
+- **Check Out** (Object, Optional)
+  - `time` (Date)
+  - `location` (Object)
+- **Work Hours** (Number, Auto-calculated)
+- **Status** (Enum, Default: Present)
+- **Notes** (String)
+
+### Status Options:
+- `Present` - Checked in and out (default)
+- `Absent` - Not checked in
+- `Half Day` - Less than expected hours
+- `Leave` - Approved leave
+
+---
+
+## 🧪 Quick Test Flow (Attendance)
+
+1. **Login as User:**
+```bash
+POST /api/auth/login
+{
+  "email": "user@gmail.com",
+  "password": "user123"
+}
+```
+
+2. **Check In:**
+```bash
+POST /api/attendance/checkin
+{
+  "event": "EVENT_ID",
+  "checkIn": {
+    "time": "2024-02-05T09:00:00Z",
+    "location": {
+      "latitude": 28.7041,
+      "longitude": 77.1025,
+      "address": "Event Venue"
+    },
+    "selfie": "/uploads/selfie-123.jpg"
+  }
+}
+```
+
+3. **Get My Attendance:**
+```bash
+GET /api/attendance
+```
+
+4. **Check Out:**
+```bash
+PUT /api/attendance/ATTENDANCE_ID/checkout
+{
+  "checkOut": {
+    "time": "2024-02-05T18:00:00Z"
+  }
+}
+```
+
+5. **Get Summary:**
+```bash
+GET /api/attendance/summary
+```
+
+---
+
+## ✅ Attendance Testing Checklist
+
+### User/Mobile APIs:
+- [ ] Check in with location and selfie
+- [ ] Check in without optional fields
+- [ ] Check out
+- [ ] Get all my attendance records
+- [ ] Filter by event
+- [ ] Filter by date range
+- [ ] Get single attendance record
+- [ ] Get my attendance summary
+- [ ] Try to view another user's attendance (should fail)
+
+### Admin APIs:
+- [ ] View all users' attendance
+- [ ] Filter by specific user
+- [ ] Filter by event
+- [ ] Filter by date range
+- [ ] Filter by status
+- [ ] Get specific user's summary
+
+---
+
+---
+
+# ✅ Task Management API Reference
+
+---
+
+## 🎯 API Overview
+
+The Task Management system has a **single API endpoint** with role-based access control:
+
+### 📱 User/Mobile APIs (`/api/tasks`)
+**Purpose:** For regular users to manage tasks
+- Create tasks
+- View tasks assigned to them OR created by them
+- Update task status
+- Mark tasks as completed
+- Delete tasks
+
+### 🔐 Admin View (Same endpoint with elevated permissions)
+**Purpose:** Admins with `canViewReports` permission can:
+- View **ALL** tasks across all users
+- Filter by any user
+- Monitor team task progress
+
+---
+
+# 📱 USER/MOBILE APIs
+
+Base URL: `http://localhost:5003/api/tasks`
+
+---
+
+## 🔐 Authentication
+
+All endpoints require Bearer token:
+```
+Authorization: Bearer YOUR_TOKEN
+```
+
+---
+
+## 📝 Create Task
+
+**POST** `/api/tasks`
+
+**Body:**
+```json
+{
+  "title": "Follow up with leads",
+  "description": "Call all qualified leads from Tech Expo",
+  "assignedTo": "USER_ID",
+  "event": "EVENT_ID",
+  "dueDate": "2024-02-10T18:00:00Z",
+  "priority": "High",
+  "reminder": {
+    "enabled": true,
+    "time": "2024-02-10T09:00:00Z"
+  }
+}
+```
+
+**Required Fields:**
+- `title` (String, max 255 chars) - Task title
+- `assignedTo` (User ObjectId) - User to assign task to
+
+**Optional Fields:**
+- `description` (String) - Detailed task description
+- `event` (Event ObjectId) - Related event
+- `dueDate` (Date) - Task deadline
+- `priority` (High/Medium/Low) - Default: Medium
+- `reminder` (Object)
+  - `enabled` (Boolean) - Enable reminder
+  - `time` (Date) - Reminder time
+
+**Note:** `assignedBy` field is auto-filled from logged-in user's ID
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "65abc123def456789",
+    "title": "Follow up with leads",
+    "description": "Call all qualified leads from Tech Expo",
+    "assignedTo": "USER_ID",
+    "assignedBy": "CURRENT_USER_ID",
+    "event": "EVENT_ID",
+    "dueDate": "2024-02-10T18:00:00Z",
+    "priority": "High",
+    "status": "Pending",
+    "reminder": {
+      "enabled": true,
+      "time": "2024-02-10T09:00:00Z"
+    },
+    "createdAt": "2024-02-05T10:00:00Z"
+  }
+}
+```
+
+---
+
+## 📋 Get All Tasks
+
+**GET** `/api/tasks`
+
+**Query Parameters:**
+- `event` - Filter by event ID
+- `status` - Filter by status
+- `priority` - Filter by priority
+- `assignedTo` - Filter by assigned user (Admin only)
+
+**Examples:**
+```
+GET /api/tasks
+GET /api/tasks?event=EVENT_ID
+GET /api/tasks?status=Pending
+GET /api/tasks?priority=High
+GET /api/tasks?assignedTo=USER_ID&status=Pending
+```
+
+**Returns:**
+- Users see tasks assigned to them OR created by them
+- Admins (canViewReports permission) see all tasks
+
+**Response:**
+```json
+{
+  "success": true,
+  "count": 15,
+  "data": [
+    {
+      "_id": "65abc123def456789",
+      "title": "Follow up with leads",
+      "description": "Call all qualified leads",
+      "assignedTo": {
+        "_id": "USER_ID",
+        "name": "John Doe",
+        "email": "john@example.com"
+      },
+      "assignedBy": {
+        "_id": "MANAGER_ID",
+        "name": "Jane Manager",
+        "email": "jane@example.com"
+      },
+      "event": {
+        "_id": "EVENT_ID",
+        "name": "Tech Expo 2024"
+      },
+      "dueDate": "2024-02-10T18:00:00Z",
+      "priority": "High",
+      "status": "Pending",
+      "reminder": {
+        "enabled": true,
+        "time": "2024-02-10T09:00:00Z"
+      },
+      "createdAt": "2024-02-05T10:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+## 👤 Get Single Task
+
+**GET** `/api/tasks/:id`
+
+**Example:**
+```
+GET /api/tasks/65abc123def456789
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "65abc123def456789",
+    "title": "Follow up with leads",
+    "description": "Call all qualified leads from Tech Expo",
+    "assignedTo": {
+      "_id": "USER_ID",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "phone": "+1234567890"
+    },
+    "assignedBy": {
+      "_id": "MANAGER_ID",
+      "name": "Jane Manager",
+      "email": "jane@example.com"
+    },
+    "event": {
+      "_id": "EVENT_ID",
+      "name": "Tech Expo 2024",
+      "location": "India Gate, Delhi"
+    },
+    "dueDate": "2024-02-10T18:00:00Z",
+    "priority": "High",
+    "status": "Pending",
+    "reminder": {
+      "enabled": true,
+      "time": "2024-02-10T09:00:00Z"
+    },
+    "createdAt": "2024-02-05T10:00:00Z",
+    "updatedAt": "2024-02-05T10:00:00Z"
+  }
+}
+```
+
+---
+
+## ✏️ Update Task
+
+**PUT** `/api/tasks/:id`
+
+**Body:**
+```json
+{
+  "status": "In Progress",
+  "priority": "High"
+}
+```
+
+**Updatable Fields:**
+- `title` (String)
+- `description` (String)
+- `assignedTo` (User ObjectId)
+- `event` (Event ObjectId)
+- `dueDate` (Date)
+- `priority` (High/Medium/Low)
+- `status` (Pending/In Progress/Completed/Cancelled)
+- `reminder` (Object)
+  - `enabled` (Boolean)
+  - `time` (Date)
+
+**Auto-set Fields:**
+- When status is set to "Completed", `completedAt` is set to current timestamp
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "65abc123def456789",
+    "title": "Follow up with leads",
+    "status": "In Progress",
+    "priority": "High",
+    "updatedAt": "2024-02-06T10:00:00Z"
+  }
+}
+```
+
+---
+
+## 🗑️ Delete Task
+
+**DELETE** `/api/tasks/:id`
+
+**Example:**
+```
+DELETE /api/tasks/65abc123def456789
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Task deleted successfully",
+  "data": {}
+}
+```
+
+---
+
+## 📊 Task Field Values
+
+### Task Fields:
+- **Title** (String, Required, Max 255 chars)
+- **Description** (String, Optional)
+- **Assigned To** (User ObjectId, Required) - User who will do the task
+- **Assigned By** (User ObjectId, Auto-filled) - User who created the task
+- **Event** (Event ObjectId, Optional) - Related event
+- **Due Date** (Date, Optional) - Task deadline
+- **Priority** (Enum, Default: Medium)
+- **Status** (Enum, Default: Pending)
+- **Completed At** (Date, Auto-set when status = Completed)
+- **Reminder** (Object)
+  - `enabled` (Boolean, Default: false)
+  - `time` (Date) - When to send reminder
+
+### Priority Options:
+- `High` - Urgent task
+- `Medium` - Standard priority (default)
+- `Low` - Low priority
+
+### Status Options:
+- `Pending` - Not started (default)
+- `In Progress` - Currently working on it
+- `Completed` - Task finished
+- `Cancelled` - Task cancelled
+
+---
+
+## 🧪 Quick Test Flow (Tasks)
+
+1. **Login as Manager:**
+```bash
+POST /api/auth/login
+{
+  "email": "manager@gmail.com",
+  "password": "manager123"
+}
+```
+
+2. **Create Task:**
+```bash
+POST /api/tasks
+{
+  "title": "Follow up with leads",
+  "description": "Call all qualified leads from event",
+  "assignedTo": "USER_ID",
+  "event": "EVENT_ID",
+  "dueDate": "2024-02-10T18:00:00Z",
+  "priority": "High",
+  "reminder": {
+    "enabled": true,
+    "time": "2024-02-10T09:00:00Z"
+  }
+}
+```
+
+3. **Get All Tasks:**
+```bash
+GET /api/tasks
+```
+
+4. **Login as Assigned User:**
+```bash
+POST /api/auth/login
+{
+  "email": "user@gmail.com",
+  "password": "user123"
+}
+```
+
+5. **View My Tasks:**
+```bash
+GET /api/tasks
+```
+
+6. **Update Task Status:**
+```bash
+PUT /api/tasks/TASK_ID
+{
+  "status": "In Progress"
+}
+```
+
+7. **Mark as Completed:**
+```bash
+PUT /api/tasks/TASK_ID
+{
+  "status": "Completed"
+}
+```
+
+8. **Filter Tasks:**
+```bash
+GET /api/tasks?status=Pending&priority=High
+GET /api/tasks?event=EVENT_ID
+```
+
+---
+
+## ✅ Task Testing Checklist
+
+- [ ] Create task with all fields
+- [ ] Create task with only required fields
+- [ ] Get all my tasks
+- [ ] Filter by event
+- [ ] Filter by status
+- [ ] Filter by priority
+- [ ] Get single task
+- [ ] Update task status to "In Progress"
+- [ ] Update task priority
+- [ ] Mark task as completed (check completedAt is set)
+- [ ] Delete task
+- [ ] Assign task to another user
+- [ ] Enable/disable reminder
+- [ ] Admin: View all tasks
+- [ ] Try to view another user's task (should work if assigned/created by you)
+
+---
 
 

@@ -66,4 +66,14 @@ export const getEventReport = (sourceId) => api.get(`/admin/leads/reports/source
 export const exportLeadsToExcel = (params) => api.get('/admin/leads/export/excel', { params, responseType: 'blob' })
 export const exportLeadsToCSV = (params) => api.get('/admin/leads/export/csv', { params, responseType: 'blob' })
 
+// Admin Expenses
+export const getExpenses = (params) => api.get('/admin/expenses', { params })
+export const getExpense = (id) => api.get(`/admin/expenses/${id}`)
+export const deleteExpense = (id) => api.delete(`/admin/expenses/${id}`)
+export const reviewExpense = (id, data) => api.put(`/admin/expenses/${id}/review`, data)
+export const getExpensesByEvent = (eventId) => api.get(`/admin/expenses/reports/event/${eventId}`)
+export const getExpensesByUser = (userId) => api.get(`/admin/expenses/reports/user/${userId}`)
+export const getExpensesByCategory = (category) => api.get(`/admin/expenses/reports/category/${category}`)
+export const exportExpensesToExcel = (params) => api.get('/admin/expenses/export/excel', { params, responseType: 'blob' })
+
 export default api
