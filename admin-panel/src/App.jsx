@@ -13,6 +13,9 @@ import Leads from './pages/Leads'
 import LeadDetails from './pages/LeadDetails'
 import Expenses from './pages/Expenses'
 import ExpenseReports from './pages/ExpenseReports'
+import Attendance from './pages/Attendance'
+import Tasks from './pages/Tasks'
+import TaskForm from './pages/TaskForm'
 import Layout from './components/Layout'
 
 function App() {
@@ -143,6 +146,38 @@ function App() {
           <ProtectedRoute>
             <Layout setIsAuthenticated={setIsAuthenticated}>
               <ExpenseReports />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/attendance" element={
+          <ProtectedRoute>
+            <Layout setIsAuthenticated={setIsAuthenticated}>
+              <Attendance />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/tasks" element={
+          <ProtectedRoute>
+            <Layout setIsAuthenticated={setIsAuthenticated}>
+              <Tasks />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/tasks/new" element={
+          <ProtectedRoute>
+            <Layout setIsAuthenticated={setIsAuthenticated}>
+              <TaskForm />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/tasks/edit/:id" element={
+          <ProtectedRoute>
+            <Layout setIsAuthenticated={setIsAuthenticated}>
+              <TaskForm />
             </Layout>
           </ProtectedRoute>
         } />

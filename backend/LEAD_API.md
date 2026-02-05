@@ -1737,7 +1737,19 @@ Authorization: Bearer YOUR_TOKEN
 
 **POST** `/api/tasks`
 
-**Body:**
+**Simple Example (Recommended for now):**
+```json
+{
+  "title": "Follow up with leads",
+  "description": "Call all qualified leads from Tech Expo",
+  "assignedTo": "USER_ID",
+  "event": "EVENT_ID",
+  "dueDate": "2024-02-10T18:00:00Z",
+  "priority": "High"
+}
+```
+
+**With Reminder (Optional - Not Functional Yet):**
 ```json
 {
   "title": "Follow up with leads",
@@ -1753,6 +1765,8 @@ Authorization: Bearer YOUR_TOKEN
 }
 ```
 
+**⚠️ NOTE:** The `reminder` field is stored in the database but **notifications are not implemented yet**. You can safely omit this field for now.
+
 **Required Fields:**
 - `title` (String, max 255 chars) - Task title
 - `assignedTo` (User ObjectId) - User to assign task to
@@ -1762,7 +1776,7 @@ Authorization: Bearer YOUR_TOKEN
 - `event` (Event ObjectId) - Related event
 - `dueDate` (Date) - Task deadline
 - `priority` (High/Medium/Low) - Default: Medium
-- `reminder` (Object)
+- `reminder` (Object) - **⚠️ Not functional yet - can be omitted**
   - `enabled` (Boolean) - Enable reminder
   - `time` (Date) - Reminder time
 
@@ -1974,9 +1988,10 @@ DELETE /api/tasks/65abc123def456789
 - **Priority** (Enum, Default: Medium)
 - **Status** (Enum, Default: Pending)
 - **Completed At** (Date, Auto-set when status = Completed)
-- **Reminder** (Object)
+- **Reminder** (Object, Optional) - **⚠️ Not functional yet**
   - `enabled` (Boolean, Default: false)
   - `time` (Date) - When to send reminder
+  - **Note:** Field is stored but notifications are not implemented
 
 ### Priority Options:
 - `High` - Urgent task
@@ -2011,13 +2026,10 @@ POST /api/tasks
   "assignedTo": "USER_ID",
   "event": "EVENT_ID",
   "dueDate": "2024-02-10T18:00:00Z",
-  "priority": "High",
-  "reminder": {
-    "enabled": true,
-    "time": "2024-02-10T09:00:00Z"
-  }
+  "priority": "High"
 }
 ```
+**Note:** Reminder field omitted since notifications are not implemented yet
 
 3. **Get All Tasks:**
 ```bash
@@ -2191,7 +2203,7 @@ GET /api/tasks?status=Pending
 - [ ] Mark task as completed (check completedAt is set)
 - [ ] Delete own task
 - [ ] Assign task to another user
-- [ ] Enable/disable reminder
+- [ ] Enable/disable reminder (⚠️ Note: Won't send actual notifications)
 - [ ] Try to view another user's task (should only work if assigned/created by you)
 
 ### Admin APIs:

@@ -58,27 +58,27 @@ function Layout({ children, setIsAuthenticated }) {
                 </Link>
               </li>
               <li>
-                <Link to="/expenses" className={isActive('/expenses') ? 'active' : ''}>
+                <Link to="/expenses" className={isActive('/expenses') || location.pathname.startsWith('/expenses/') ? 'active' : ''}>
                   <span className="menu-icon">💰</span>
                   Expenses
                 </Link>
               </li>
               <li>
-                <Link to="/activity-logs" className={isActive('/activity-logs') ? 'active' : ''}>
-                  <span className="menu-icon">📋</span>
-                  Activity Logs
+                <Link to="/attendance" className={isActive('/attendance') ? 'active' : ''}>
+                  <span className="menu-icon">🕐</span>
+                  Attendance
                 </Link>
               </li>
-            </ul>
-          </div>
-
-          <div className="menu-section">
-            <div className="menu-section-title">Coming Soon</div>
-            <ul>
               <li>
-                <Link to="#" style={{opacity: 0.5, cursor: 'not-allowed'}}>
-                  <span className="menu-icon">📈</span>
-                  Reports
+                <Link to="/tasks" className={isActive('/tasks') || location.pathname.startsWith('/tasks/') ? 'active' : ''}>
+                  <span className="menu-icon">📋</span>
+                  Tasks
+                </Link>
+              </li>
+              <li>
+                <Link to="/activity-logs" className={isActive('/activity-logs') ? 'active' : ''}>
+                  <span className="menu-icon">📜</span>
+                  Activity Logs
                 </Link>
               </li>
             </ul>

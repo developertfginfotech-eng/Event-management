@@ -76,4 +76,18 @@ export const getExpensesByUser = (userId) => api.get(`/admin/expenses/reports/us
 export const getExpensesByCategory = (category) => api.get(`/admin/expenses/reports/category/${category}`)
 export const exportExpensesToExcel = (params) => api.get('/admin/expenses/export/excel', { params, responseType: 'blob' })
 
+// Attendance
+export const getAttendance = (params) => api.get('/attendance', { params })
+export const getAttendanceRecord = (id) => api.get(`/attendance/${id}`)
+export const checkIn = (data) => api.post('/attendance/checkin', data)
+export const checkOut = (id, data) => api.put(`/attendance/${id}/checkout`, data)
+export const getAttendanceSummary = (userId) => api.get(`/attendance/summary/${userId || ''}`)
+
+// Tasks
+export const getTasks = (params) => api.get('/tasks', { params })
+export const getTask = (id) => api.get(`/tasks/${id}`)
+export const createTask = (data) => api.post('/tasks', data)
+export const updateTask = (id, data) => api.put(`/tasks/${id}`, data)
+export const deleteTask = (id) => api.delete(`/tasks/${id}`)
+
 export default api
