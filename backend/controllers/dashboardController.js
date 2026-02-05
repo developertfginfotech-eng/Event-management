@@ -49,7 +49,7 @@ exports.getAdminDashboard = async (req, res, next) => {
       { $limit: 10 },
     ]);
 
-    // Expense summary
+    // Expense summary with budget comparison
     const expenseSummary = await Expense.aggregate([
       {
         $group: {
@@ -67,7 +67,22 @@ exports.getAdminDashboard = async (req, res, next) => {
     const approvedExpense =
       expenseSummary.find((item) => item._id === 'Approved')?.totalAmount || 0;
 
-    // Attendance summary
+    // Calculate total budget from all events
+    const totalBudget = await Event.aggregate([
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$budget' },
+        },
+      },
+    ]);
+
+    const budgetAmount = totalBudget[0]?.total || 0;
+    const budgetUtilization = budgetAmount > 0
+      ? ((approvedExpense / budgetAmount) * 100).toFixed(2)
+      : 0;
+
+    // Enhanced attendance summary
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const todayEnd = new Date();
@@ -76,6 +91,24 @@ exports.getAdminDashboard = async (req, res, next) => {
     const todayAttendance = await Attendance.countDocuments({
       date: { $gte: todayStart, $lte: todayEnd },
     });
+
+    const attendanceSummary = await Attendance.aggregate([
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const attendanceByStatus = {};
+    attendanceSummary.forEach(item => {
+      attendanceByStatus[item._id] = item.count;
+    });
+
+    const totalAttendance = await Attendance.countDocuments();
+    const presentCount = attendanceByStatus['Present'] || 0;
+    const absentCount = attendanceByStatus['Absent'] || 0;
 
     res.status(200).json({
       success: true,
@@ -97,9 +130,16 @@ exports.getAdminDashboard = async (req, res, next) => {
           total: totalExpense,
           pending: pendingExpense,
           approved: approvedExpense,
+          budget: budgetAmount,
+          budgetUtilization: parseFloat(budgetUtilization),
+          remaining: budgetAmount - approvedExpense,
         },
         attendance: {
           today: todayAttendance,
+          total: totalAttendance,
+          present: presentCount,
+          absent: absentCount,
+          byStatus: attendanceByStatus,
         },
       },
     });

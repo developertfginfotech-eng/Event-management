@@ -303,6 +303,70 @@ exports.getExpensesByCategory = async (req, res, next) => {
   }
 };
 
+// @desc    Export expenses to CSV
+// @route   GET /api/admin/expenses/export/csv
+// @access  Private (canApproveExpenses)
+exports.exportExpensesToCSV = async (req, res, next) => {
+  try {
+    const { event, user, status, category } = req.query;
+    let query = {};
+
+    if (event) query.event = event;
+    if (user) query.user = user;
+    if (status) query.status = status;
+    if (category) query.category = category;
+
+    const expenses = await Expense.find(query)
+      .populate('event', 'name')
+      .populate('user', 'name')
+      .populate('approvedBy', 'name')
+      .lean()
+      .sort('-date');
+
+    // Create CSV content
+    const headers = [
+      'Date',
+      'User',
+      'Event',
+      'Category',
+      'Sub-Category',
+      'Description',
+      'Amount (₹)',
+      'Status',
+      'Approved By',
+      'Admin Comments'
+    ];
+
+    const rows = expenses.map(expense => [
+      new Date(expense.date).toLocaleDateString(),
+      expense.user?.name || '-',
+      expense.event?.name || '-',
+      expense.category,
+      expense.subCategory || '-',
+      `"${expense.description.replace(/"/g, '""')}"`,
+      expense.amount,
+      expense.status,
+      expense.approvedBy?.name || '-',
+      expense.adminComments ? `"${expense.adminComments.replace(/"/g, '""')}"` : '-'
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=expenses-${Date.now()}.csv`
+    );
+
+    res.send(csvContent);
+  } catch (err) {
+    next(err);
+  }
+};
+
 // @desc    Export expenses to Excel
 // @route   GET /api/admin/expenses/export/excel
 // @access  Private (canApproveExpenses)
