@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { getEvents, getUsers, getExpensesByEvent, getExpensesByUser, getExpensesByCategory } from '../services/api'
 import './Expenses.css'
 
+const API_URL = import.meta.env.VITE_API_URL
+
 function ExpenseReports() {
   const navigate = useNavigate()
   const [reportType, setReportType] = useState('event')
@@ -248,7 +250,7 @@ function ExpenseReports() {
                       <td className="amount-cell">{formatCurrency(expense.amount)}</td>
                       <td>
                         {expense.receipt ? (
-                          <a href={expense.receipt} target="_blank" rel="noopener noreferrer" className="receipt-link">
+                          <a href={`${API_URL}${expense.receipt}`} target="_blank" rel="noopener noreferrer" className="receipt-link">
                             📎 View
                           </a>
                         ) : '-'}

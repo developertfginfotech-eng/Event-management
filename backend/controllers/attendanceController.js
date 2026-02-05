@@ -1,4 +1,5 @@
 const Attendance = require('../models/Attendance');
+const mongoose = require('mongoose');
 
 // @desc    Get all attendance records
 // @route   GET /api/attendance
@@ -158,7 +159,10 @@ exports.checkOut = async (req, res, next) => {
 // @access  Private
 exports.getAttendanceSummary = async (req, res, next) => {
   try {
-    const userId = req.params.userId || req.user._id;
+    // Convert userId to ObjectId for aggregation
+    const userId = req.params.userId
+      ? new mongoose.Types.ObjectId(req.params.userId)
+      : req.user._id;
 
     const summary = await Attendance.aggregate([
       { $match: { user: userId } },

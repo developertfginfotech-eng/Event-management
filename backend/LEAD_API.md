@@ -1286,10 +1286,17 @@ GET /api/attendance?startDate=2024-02-01&endDate=2024-02-28
 
 **GET** `/api/attendance/:id`
 
-**Example:**
+**⚠️ IMPORTANT:** The `:id` parameter is an **ATTENDANCE RECORD ID**, NOT a user ID!
+
+**Examples:**
 ```
-GET /api/attendance/65abc123def456789
+GET /api/attendance/6984301c5c6c8e3aba2a2623  (✅ Correct - attendance record ID)
+GET /api/attendance/6981e0a775abdaecf610b693  (❌ Wrong - this is a user ID!)
 ```
+
+**How to get attendance record ID:**
+1. Call `GET /api/attendance` to list all records
+2. Copy the `_id` field from the response (not the `user._id`)
 
 **Note:** Users can only view their own attendance records
 
@@ -1340,12 +1347,16 @@ GET /api/attendance/65abc123def456789
 
 **GET** `/api/attendance/summary`
 
-Get personal attendance summary
+Get personal attendance summary (aggregated statistics)
+
+**⚠️ NOTE:** This is different from `/api/attendance/:id` which gets a single attendance record!
 
 **Example:**
 ```
 GET /api/attendance/summary
 ```
+
+**Returns:** Aggregated summary of your attendance (total days, work hours, status counts)
 
 **Response:**
 ```json
@@ -1438,12 +1449,20 @@ GET /api/attendance?status=Present&event=EVENT_ID
 
 **GET** `/api/attendance/summary/:userId`
 
-Get attendance summary for a specific user
+Get aggregated attendance summary for a specific user
 
-**Example:**
+**⚠️ IMPORTANT:** The `:userId` parameter is a **USER ID**, NOT an attendance record ID!
+
+**Examples:**
 ```
-GET /api/attendance/summary/6981e0a775abdaecf610b693
+GET /api/attendance/summary/6981e0a775abdaecf610b693  (✅ Correct - user ID)
+GET /api/attendance/summary/6984301c5c6c8e3aba2a2623  (❌ Wrong - this is attendance record ID!)
 ```
+
+**How to get user ID:**
+1. Call `GET /api/users` to list all users
+2. Copy the `_id` field from the user object
+3. OR use the `user._id` from an attendance record response
 
 **Response:**
 ```json
@@ -1510,6 +1529,65 @@ GET /api/attendance/summary/USER_ID
 | **Filter by User** | ❌ No | ✅ Yes |
 | **Summary** | Own summary only | ✅ Any user's summary |
 | **Permission** | Any authenticated user | `canViewReports` required |
+
+---
+
+## ⚠️ COMMON MISTAKES - READ THIS!
+
+### Understanding Different ID Types:
+
+There are **TWO different types of IDs** in attendance:
+
+| ID Type | What it identifies | Where to use it | Example |
+|---------|-------------------|-----------------|---------|
+| **Attendance Record ID** | A single check-in/check-out record | `/api/attendance/:id` | `6984301c5c6c8e3aba2a2623` |
+| **User ID** | A person/employee | `/api/attendance/summary/:userId` | `6981e0a775abdaecf610b693` |
+
+### ❌ Common Mistake:
+```bash
+# WRONG - Using user ID to get attendance record
+GET /api/attendance/6981e0a775abdaecf610b693
+Response: 404 Not Found ❌
+
+# CORRECT - Use attendance record ID
+GET /api/attendance/6984301c5c6c8e3aba2a2623
+Response: 200 OK ✅
+```
+
+### ✅ Correct Usage:
+
+**To get a single attendance record:**
+```bash
+# Step 1: List all attendance
+GET /api/attendance
+
+# Step 2: Copy the "_id" field (not "user._id"!)
+{
+  "_id": "6984301c5c6c8e3aba2a2623",  ← Use this ID
+  "user": {
+    "_id": "6981e0a775abdaecf610b693"  ← Don't use this here!
+  }
+}
+
+# Step 3: Get that specific record
+GET /api/attendance/6984301c5c6c8e3aba2a2623
+```
+
+**To get a user's summary:**
+```bash
+# Step 1: List all attendance or users
+GET /api/attendance  OR  GET /api/users
+
+# Step 2: Copy the "user._id" or "_id" from user object
+{
+  "user": {
+    "_id": "6981e0a775abdaecf610b693"  ← Use this ID
+  }
+}
+
+# Step 3: Get that user's summary
+GET /api/attendance/summary/6981e0a775abdaecf610b693
+```
 
 ---
 
@@ -1715,7 +1793,7 @@ Authorization: Bearer YOUR_TOKEN
 
 ---
 
-## 📋 Get All Tasks
+## 📋 Get My Tasks
 
 **GET** `/api/tasks`
 
@@ -1723,7 +1801,6 @@ Authorization: Bearer YOUR_TOKEN
 - `event` - Filter by event ID
 - `status` - Filter by status
 - `priority` - Filter by priority
-- `assignedTo` - Filter by assigned user (Admin only)
 
 **Examples:**
 ```
@@ -1731,12 +1808,9 @@ GET /api/tasks
 GET /api/tasks?event=EVENT_ID
 GET /api/tasks?status=Pending
 GET /api/tasks?priority=High
-GET /api/tasks?assignedTo=USER_ID&status=Pending
 ```
 
-**Returns:**
-- Users see tasks assigned to them OR created by them
-- Admins (canViewReports permission) see all tasks
+**Returns:** Tasks assigned to you OR created by you
 
 **Response:**
 ```json
@@ -1988,11 +2062,126 @@ GET /api/tasks?event=EVENT_ID
 
 ---
 
+# 🔐 ADMIN APIs
+
+Base URL: `http://localhost:5003/api/tasks`
+
+**Required Permission:** `canViewReports` (Manager/Admin roles)
+
+---
+
+## 📋 View All Tasks (Admin)
+
+**GET** `/api/tasks`
+
+**Query Parameters:**
+- `event` - Filter by event ID
+- `status` - Filter by status
+- `priority` - Filter by priority
+- `assignedTo` - Filter by specific user
+
+**Examples:**
+```
+GET /api/tasks (All users' tasks)
+GET /api/tasks?assignedTo=USER_ID
+GET /api/tasks?event=EVENT_ID&status=Pending
+GET /api/tasks?priority=High&assignedTo=USER_ID
+```
+
+**Returns:** **ALL** tasks across all users (no user filtering)
+
+**Response:**
+```json
+{
+  "success": true,
+  "count": 85,
+  "data": [
+    {
+      "_id": "65abc123def456789",
+      "title": "Follow up with leads",
+      "description": "Call all qualified leads",
+      "assignedTo": {
+        "_id": "USER_ID",
+        "name": "John Doe",
+        "email": "john@example.com"
+      },
+      "assignedBy": {
+        "_id": "MANAGER_ID",
+        "name": "Jane Manager",
+        "email": "jane@example.com"
+      },
+      "event": {
+        "_id": "EVENT_ID",
+        "name": "Tech Expo 2024"
+      },
+      "dueDate": "2024-02-10T18:00:00Z",
+      "priority": "High",
+      "status": "Pending",
+      "reminder": {
+        "enabled": true,
+        "time": "2024-02-10T09:00:00Z"
+      },
+      "createdAt": "2024-02-05T10:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+## 🧪 Quick Test Flow (Admin)
+
+1. **Login as Admin:**
+```bash
+POST /api/auth/login
+{
+  "email": "admin@gmail.com",
+  "password": "admin123"
+}
+```
+
+2. **View All Tasks:**
+```bash
+GET /api/tasks
+```
+
+3. **Filter by User:**
+```bash
+GET /api/tasks?assignedTo=USER_ID
+```
+
+4. **Filter by Status & Event:**
+```bash
+GET /api/tasks?status=Pending&event=EVENT_ID
+```
+
+5. **View Overdue Tasks:**
+```bash
+GET /api/tasks?status=Pending
+(Check dueDate < today in response)
+```
+
+---
+
+## 🔑 Key Differences: User vs Admin APIs
+
+| Feature | User APIs | Admin APIs |
+|---------|-----------|------------|
+| **View Scope** | Tasks assigned/created by them | ALL users' tasks |
+| **Create** | ✅ Yes | ✅ Yes |
+| **Update** | ✅ Own tasks | ✅ Any task |
+| **Delete** | ✅ Own tasks | ✅ Any task |
+| **Filter by User** | ❌ No | ✅ Yes |
+| **Permission** | Any authenticated user | `canViewReports` required |
+
+---
+
 ## ✅ Task Testing Checklist
 
+### User/Mobile APIs:
 - [ ] Create task with all fields
 - [ ] Create task with only required fields
-- [ ] Get all my tasks
+- [ ] Get all my tasks (assigned to OR created by me)
 - [ ] Filter by event
 - [ ] Filter by status
 - [ ] Filter by priority
@@ -2000,11 +2189,18 @@ GET /api/tasks?event=EVENT_ID
 - [ ] Update task status to "In Progress"
 - [ ] Update task priority
 - [ ] Mark task as completed (check completedAt is set)
-- [ ] Delete task
+- [ ] Delete own task
 - [ ] Assign task to another user
 - [ ] Enable/disable reminder
-- [ ] Admin: View all tasks
-- [ ] Try to view another user's task (should work if assigned/created by you)
+- [ ] Try to view another user's task (should only work if assigned/created by you)
+
+### Admin APIs:
+- [ ] View all tasks across all users
+- [ ] Filter by specific user (assignedTo)
+- [ ] Filter by event
+- [ ] Filter by status
+- [ ] Filter by priority
+- [ ] View, update, delete any task
 
 ---
 
