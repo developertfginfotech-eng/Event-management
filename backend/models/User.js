@@ -109,7 +109,7 @@ userSchema.pre('save', function (next) {
       canManageEvents: true,
       canManageUsers: false,
       canViewAllLeads: true,
-      canApproveExpenses: true,
+      canApproveExpenses: false,
       canViewReports: true,
     };
   } else {
