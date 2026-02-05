@@ -9,6 +9,7 @@ const {
   getExpensesByCategory,
   exportExpensesToExcel,
   exportExpensesToCSV,
+  exportExpensesToPDF,
 } = require('../../controllers/admin/adminExpenseController');
 
 const router = express.Router();
@@ -30,6 +31,7 @@ router.get('/reports/category/:category', getExpensesByCategory);
 // Export (must be before /:id to avoid route conflicts)
 router.get('/export/excel', exportExpensesToExcel);
 router.get('/export/csv', exportExpensesToCSV);
+router.get('/export/pdf', exportExpensesToPDF);
 
 // View single expense
 router.get('/:id', getExpenseById);

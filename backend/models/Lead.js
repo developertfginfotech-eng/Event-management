@@ -117,4 +117,11 @@ leadSchema.index({ source: 1, status: 1 });
 leadSchema.index({ assignedTo: 1 });
 leadSchema.index({ createdBy: 1 });
 
+// Prevent duplicate leads - unique combination of email and source (event)
+// This ensures same person can't be added twice to the same event
+leadSchema.index({ email: 1, source: 1 }, { unique: true, sparse: true });
+
+// Also prevent duplicate phone numbers for the same event
+leadSchema.index({ phone: 1, source: 1 }, { unique: true });
+
 module.exports = mongoose.model('Lead', leadSchema);

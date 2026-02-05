@@ -8,6 +8,7 @@ const {
   getEventReport,
   exportToExcel,
   exportToCSV,
+  exportToPDF,
 } = require('../../controllers/admin/adminLeadController');
 
 const router = express.Router();
@@ -41,5 +42,8 @@ router.get('/export/excel', exportToExcel);
 
 // Export leads to CSV
 router.get('/export/csv', exportToCSV);
+
+// Export leads to PDF
+router.get('/export/pdf', exportToPDF);
 
 module.exports = router;

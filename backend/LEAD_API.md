@@ -2216,4 +2216,561 @@ GET /api/tasks?status=Pending
 
 ---
 
+---
+
+# 📊 Dashboard & Reports API Reference
+
+---
+
+## 🎯 API Overview
+
+Base URL: `http://localhost:5003/api/dashboard`
+
+The Dashboard system provides comprehensive statistics and analytics for both admins and users across all modules (events, leads, expenses, attendance, tasks).
+
+---
+
+# 👑 ADMIN DASHBOARD API
+
+## 📊 Get Admin Dashboard Stats
+
+**GET** `/api/dashboard/admin`
+
+**Permission Required:** `canViewReports` (Manager/Admin roles)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "events": {
+      "total": 25,
+      "upcoming": 5,
+      "live": 3,
+      "completed": 17
+    },
+    "leads": {
+      "total": 450,
+      "new": 120,
+      "converted": 85,
+      "conversionRate": 18.89,
+      "byEvent": [
+        {
+          "_id": "EVENT_ID",
+          "eventName": "Tech Expo 2024",
+          "count": 150
+        }
+      ]
+    },
+    "expenses": {
+      "total": 125000,
+      "pending": 20000,
+      "approved": 100000,
+      "budget": 200000,
+      "budgetUtilization": 50.00,
+      "remaining": 100000
+    },
+    "attendance": {
+      "today": 45,
+      "total": 1250,
+      "present": 1100,
+      "absent": 50,
+      "byStatus": {
+        "Present": 1100,
+        "Absent": 50,
+        "Half Day": 80,
+        "Leave": 20
+      }
+    }
+  }
+}
+```
+
+### Features:
+
+**Events:**
+- Total, upcoming, live, completed event counts
+
+**Leads:**
+- Total leads, new leads, converted leads
+- Conversion rate percentage
+- Top 10 events by lead count
+
+**Expenses vs Budget:**
+- Total expenses, pending, approved amounts
+- Total budget across all events
+- Budget utilization percentage
+- Remaining budget
+
+**Attendance:**
+- Today's attendance count
+- Total attendance records
+- Present/Absent counts
+- Breakdown by status
+
+---
+
+# 👤 USER DASHBOARD API
+
+## 📊 Get User Dashboard Stats
+
+**GET** `/api/dashboard/user`
+
+**Permission:** Any authenticated user
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "events": {
+      "assigned": [
+        {
+          "_id": "EVENT_ID",
+          "name": "Tech Expo 2024",
+          "startDate": "2024-02-10T00:00:00Z",
+          "endDate": "2024-02-12T00:00:00Z",
+          "status": "Upcoming",
+          "location": {
+            "city": "Delhi",
+            "venue": "India Gate"
+          }
+        }
+      ],
+      "count": 3
+    },
+    "leads": {
+      "total": 25,
+      "new": 10,
+      "converted": 5
+    },
+    "tasks": {
+      "pending": 8,
+      "recent": [
+        {
+          "_id": "TASK_ID",
+          "title": "Follow up with leads",
+          "event": {
+            "_id": "EVENT_ID",
+            "name": "Tech Expo 2024"
+          },
+          "dueDate": "2024-02-10T18:00:00Z",
+          "priority": "High",
+          "status": "Pending",
+          "createdAt": "2024-02-05T10:00:00Z"
+        }
+      ]
+    },
+    "expenses": [
+      {
+        "_id": "Pending",
+        "totalAmount": 5000,
+        "count": 3
+      },
+      {
+        "_id": "Approved",
+        "totalAmount": 15000,
+        "count": 8
+      },
+      {
+        "_id": "Rejected",
+        "totalAmount": 500,
+        "count": 1
+      }
+    ],
+    "attendance": {
+      "today": {
+        "_id": "ATTENDANCE_ID",
+        "user": "USER_ID",
+        "event": "EVENT_ID",
+        "date": "2024-02-05T00:00:00Z",
+        "checkIn": {
+          "time": "2024-02-05T09:00:00Z",
+          "location": {
+            "latitude": 28.7041,
+            "longitude": 77.1025,
+            "address": "Event Venue"
+          }
+        },
+        "status": "Present"
+      }
+    }
+  }
+}
+```
+
+### Features:
+
+**Event Schedule:**
+- List of events assigned to the user
+- Includes name, dates, status, location
+
+**Assigned Leads:**
+- Total leads assigned to user
+- New leads count
+- Converted leads count
+
+**Tasks:**
+- Pending tasks count
+- Recent 10 tasks with details
+- Sorted by due date
+
+**Expenses:**
+- Breakdown by status (Pending/Approved/Rejected)
+- Total amount and count for each status
+
+**Today's Attendance:**
+- Full attendance record for today
+- Check-in time, location, status
+- Null if not checked in yet
+
+---
+
+# 📥 REPORTS EXPORT APIs
+
+---
+
+## 📊 Export Leads
+
+### Export to Excel
+
+**GET** `/api/admin/leads/export/excel`
+
+**Query Parameters (Optional):**
+- `source` - Filter by source event ID
+- `status` - Filter by status
+- `assignedTo` - Filter by assigned user
+
+**Examples:**
+```
+GET /api/admin/leads/export/excel
+GET /api/admin/leads/export/excel?source=EVENT_ID
+GET /api/admin/leads/export/excel?status=Converted
+GET /api/admin/leads/export/excel?source=EVENT_ID&status=Qualified
+```
+
+**Response:** Excel file (.xlsx) with columns:
+- Name, Company, Phone, Email, Designation
+- Source Event, Priority, Status
+- Assigned To, Notes, Follow-ups
+- Created At, Updated At
+
+**File Name:** `leads-{timestamp}.xlsx`
+
+---
+
+### Export to CSV
+
+**GET** `/api/admin/leads/export/csv`
+
+Same query parameters and filtering as Excel export.
+
+**Response:** CSV file with same columns
+
+**File Name:** `leads-{timestamp}.csv`
+
+---
+
+### Export to PDF ✅ NEW!
+
+**GET** `/api/admin/leads/export/pdf`
+
+Same query parameters and filtering as Excel export.
+
+**Response:** PDF file with formatted lead report including:
+- Report title and generation timestamp
+- Total leads count
+- Individual lead details with contact info, status, priority
+- Source event and assignment information
+
+**File Name:** `leads-{timestamp}.pdf`
+
+---
+
+## 💰 Export Expenses
+
+### Export to Excel ✅ NEW!
+
+**GET** `/api/admin/expenses/export/excel`
+
+**Query Parameters (Optional):**
+- `event` - Filter by event ID
+- `user` - Filter by user ID
+- `status` - Filter by status (Pending/Approved/Rejected)
+- `category` - Filter by category (Travel/Food/Stay/Misc)
+
+**Examples:**
+```
+GET /api/admin/expenses/export/excel
+GET /api/admin/expenses/export/excel?status=Approved
+GET /api/admin/expenses/export/excel?event=EVENT_ID&status=Pending
+GET /api/admin/expenses/export/excel?user=USER_ID
+```
+
+**Response:** Excel file (.xlsx) with columns:
+- Date, User, Event, Category, Sub-Category
+- Description, Amount (₹), Status
+- Approved By, Admin Comments
+
+**File Name:** `expenses-{timestamp}.xlsx`
+
+---
+
+### Export to CSV ✅ NEW!
+
+**GET** `/api/admin/expenses/export/csv`
+
+Same query parameters and filtering as Excel export.
+
+**Response:** CSV file with same columns
+
+**File Name:** `expenses-{timestamp}.csv`
+
+---
+
+### Export to PDF ✅ NEW!
+
+**GET** `/api/admin/expenses/export/pdf`
+
+Same query parameters and filtering as Excel export.
+
+**Response:** PDF file with formatted expense report including:
+- Report title and generation timestamp
+- Summary section with total, pending, and approved amounts
+- Individual expense details with user, event, category, amount
+- Payment method and approval information
+
+**File Name:** `expenses-{timestamp}.pdf`
+
+---
+
+## 📅 Export Attendance ✅ NEW!
+
+### Export to Excel
+
+**GET** `/api/admin/attendance/export/excel`
+
+**Query Parameters (Optional):**
+- `event` - Filter by event ID
+- `user` - Filter by user ID
+- `status` - Filter by status (Present/Absent/Half Day/Leave)
+- `startDate` - Filter from date (YYYY-MM-DD)
+- `endDate` - Filter to date (YYYY-MM-DD)
+
+**Examples:**
+```
+GET /api/admin/attendance/export/excel
+GET /api/admin/attendance/export/excel?user=USER_ID
+GET /api/admin/attendance/export/excel?event=EVENT_ID
+GET /api/admin/attendance/export/excel?startDate=2024-02-01&endDate=2024-02-28
+GET /api/admin/attendance/export/excel?status=Present&event=EVENT_ID
+```
+
+**Response:** Excel file (.xlsx) with columns:
+- Date, User, Email, Event
+- Check-In Time, Check-Out Time, Work Hours
+- Status, Location
+
+**File Name:** `attendance-{timestamp}.xlsx`
+
+---
+
+### Export to CSV ✅ NEW!
+
+**GET** `/api/admin/attendance/export/csv`
+
+Same query parameters and filtering as Excel export.
+
+**Response:** CSV file with same columns
+
+**File Name:** `attendance-{timestamp}.csv`
+
+---
+
+### Export to PDF ✅ NEW!
+
+**GET** `/api/admin/attendance/export/pdf`
+
+Same query parameters and filtering as Excel export.
+
+**Response:** PDF file with formatted attendance report including:
+- Report title and generation timestamp
+- Summary section with total records, present/absent counts, total work hours
+- Individual attendance records with user, event, date, times
+- Check-in/check-out times, work hours, status, and location
+
+**File Name:** `attendance-{timestamp}.pdf`
+
+---
+
+## 📊 Export Summary
+
+| Report Type | Excel | CSV | PDF |
+|-------------|-------|-----|-----|
+| **Leads** | ✅ Available | ✅ Available | ✅ Available |
+| **Expenses** | ✅ Available | ✅ Available | ✅ Available |
+| **Attendance** | ✅ Available | ✅ Available | ✅ Available |
+| **Events** | ❌ Not Implemented | ❌ Not Implemented | ❌ Not Implemented |
+| **Tasks** | ❌ Not Implemented | ❌ Not Implemented | ❌ Not Implemented |
+
+---
+
+## 🧪 Quick Test Flow
+
+### Test 1: Get Admin Dashboard
+
+```bash
+POST /api/auth/login
+{
+  "email": "admin@gmail.com",
+  "password": "admin123"
+}
+# Copy the token
+
+GET /api/dashboard/admin
+Headers:
+  Authorization: Bearer YOUR_ADMIN_TOKEN
+```
+
+**Expected:** Full dashboard stats including budget comparison
+
+---
+
+### Test 2: Get User Dashboard
+
+```bash
+POST /api/auth/login
+{
+  "email": "user@gmail.com",
+  "password": "user123"
+}
+# Copy the token
+
+GET /api/dashboard/user
+Headers:
+  Authorization: Bearer YOUR_USER_TOKEN
+```
+
+**Expected:** User's assigned leads, tasks, attendance, expenses
+
+---
+
+### Test 3: Export Leads to Excel
+
+```bash
+GET /api/admin/leads/export/excel?source=EVENT_ID
+Headers:
+  Authorization: Bearer YOUR_ADMIN_TOKEN
+```
+
+**Expected:** Excel file download
+
+---
+
+### Test 4: Export Expenses to CSV (NEW!)
+
+```bash
+GET /api/admin/expenses/export/csv?status=Approved
+Headers:
+  Authorization: Bearer YOUR_ADMIN_TOKEN
+```
+
+**Expected:** CSV file download
+
+---
+
+### Test 5: Export Attendance to Excel (NEW!)
+
+```bash
+GET /api/admin/attendance/export/excel?user=USER_ID
+Headers:
+  Authorization: Bearer YOUR_ADMIN_TOKEN
+```
+
+**Expected:** Excel file download
+
+---
+
+## ✅ Dashboard & Reports Testing Checklist
+
+### Admin Dashboard:
+- [ ] Get admin dashboard stats
+- [ ] Verify events count (total, upcoming, live, completed)
+- [ ] Verify leads stats (total, new, converted, conversion rate)
+- [ ] Verify leads by event (top 10)
+- [ ] Verify expenses vs budget (total, pending, approved, budget, utilization)
+- [ ] Verify attendance summary (today, total, present, absent, by status)
+
+### User Dashboard:
+- [ ] Get user dashboard stats
+- [ ] Verify assigned events list
+- [ ] Verify assigned leads count
+- [ ] Verify tasks (pending count, recent 10)
+- [ ] Verify expenses by status
+- [ ] Verify today's attendance
+
+### Export - Leads:
+- [ ] Export all leads to Excel
+- [ ] Export all leads to CSV
+- [ ] Export filtered leads (by source)
+- [ ] Export filtered leads (by status)
+
+### Export - Expenses:
+- [ ] Export all expenses to Excel
+- [ ] Export all expenses to CSV (NEW!)
+- [ ] Export filtered expenses (by event)
+- [ ] Export filtered expenses (by status)
+- [ ] Export filtered expenses (by user)
+
+### Export - Attendance:
+- [ ] Export all attendance to Excel (NEW!)
+- [ ] Export all attendance to CSV (NEW!)
+- [ ] Export filtered attendance (by user)
+- [ ] Export filtered attendance (by event)
+- [ ] Export filtered attendance (by date range)
+- [ ] Export filtered attendance (by status)
+
+---
+
+## 🆕 What's New:
+
+### ✅ Enhanced Admin Dashboard:
+- **Budget vs Expenses:** Now includes budget comparison
+  - Total budget from all events
+  - Budget utilization percentage
+  - Remaining budget amount
+
+- **Enhanced Attendance Summary:** Now includes
+  - Total attendance records
+  - Present/Absent counts
+  - Breakdown by all statuses
+
+### ✅ New Export Features:
+- **Expenses CSV Export:** Export expenses to CSV format
+- **Attendance Excel Export:** Export attendance records to Excel
+- **Attendance CSV Export:** Export attendance records to CSV
+
+---
+
+## 📝 Notes:
+
+**PDF Export:**
+- ✅ Implemented for Leads, Expenses, and Attendance
+- Uses pdfkit library
+- Formatted reports with summaries and details
+
+**Event & Task Exports:**
+- Not implemented yet
+- Can be added if required
+
+**Real-time Updates:**
+- Dashboard data is fetched on request
+- For real-time updates, implement WebSocket or polling
+
+**Performance:**
+- All queries are optimized with indexes
+- Large exports may take time (10+ seconds for 10,000+ records)
+
+---
+
 

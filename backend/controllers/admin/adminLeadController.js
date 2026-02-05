@@ -3,6 +3,7 @@ const User = require('../../models/User');
 const Event = require('../../models/Event');
 const ExcelJS = require('exceljs');
 const { Parser } = require('json2csv');
+const PDFDocument = require('pdfkit');
 
 // @desc    Get all leads (Admin/Manager view - no filtering)
 // @route   GET /api/admin/leads
@@ -147,13 +148,44 @@ exports.bulkImportLeads = async (req, res, next) => {
       });
     }
 
-    const leadsToCreate = leads.map((lead) => ({
-      ...lead,
-      createdBy: req.user.id,
+    // Check for existing leads to prevent duplicates
+    const existingLeads = await Lead.find({
       source: sourceId,
-      status: lead.status || 'New',
-      priority: lead.priority || 'Medium',
-    }));
+      $or: leads.map(lead => ({
+        $or: [
+          { email: lead.email, email: { $exists: true, $ne: '' } },
+          { phone: lead.phone }
+        ]
+      }))
+    }).select('email phone');
+
+    const existingEmails = new Set(existingLeads.map(l => l.email).filter(Boolean));
+    const existingPhones = new Set(existingLeads.map(l => l.phone));
+
+    // Filter out duplicates
+    const leadsToCreate = leads
+      .filter(lead => {
+        const isDuplicate = (lead.email && existingEmails.has(lead.email)) ||
+                           existingPhones.has(lead.phone);
+        return !isDuplicate;
+      })
+      .map((lead) => ({
+        ...lead,
+        createdBy: req.user.id,
+        source: sourceId,
+        status: lead.status || 'New',
+        priority: lead.priority || 'Medium',
+      }));
+
+    const duplicateCount = leads.length - leadsToCreate.length;
+
+    if (leadsToCreate.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'All leads are duplicates. No new leads imported.',
+        duplicateCount,
+      });
+    }
 
     const createdLeads = await Lead.insertMany(leadsToCreate, {
       ordered: false, // Continue on error
@@ -161,8 +193,9 @@ exports.bulkImportLeads = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: `Successfully imported ${createdLeads.length} leads`,
+      message: `Successfully imported ${createdLeads.length} leads${duplicateCount > 0 ? `. Skipped ${duplicateCount} duplicate(s)` : ''}`,
       count: createdLeads.length,
+      duplicateCount,
       data: createdLeads,
     });
   } catch (err) {
@@ -400,6 +433,106 @@ exports.exportToCSV = async (req, res, next) => {
     );
 
     res.status(200).send(csv);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Export leads to PDF
+// @route   GET /api/admin/leads/export/pdf
+// @access  Private (canViewAllLeads)
+exports.exportToPDF = async (req, res, next) => {
+  try {
+    const { source, status, priority, assignedTo } = req.query;
+    let query = {};
+
+    if (source) query.source = source;
+    if (status) query.status = status;
+    if (priority) query.priority = priority;
+    if (assignedTo) query.assignedTo = assignedTo;
+
+    const leads = await Lead.find(query)
+      .populate('source', 'name')
+      .populate('assignedTo', 'name')
+      .lean()
+      .sort('-createdAt');
+
+    // Create PDF document
+    const doc = new PDFDocument({ margin: 50, size: 'A4' });
+
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=leads-${Date.now()}.pdf`
+    );
+
+    // Pipe PDF to response
+    doc.pipe(res);
+
+    // Add title
+    doc.fontSize(20).font('Helvetica-Bold').text('Leads Report', { align: 'center' });
+    doc.moveDown();
+
+    // Add metadata
+    doc.fontSize(10).font('Helvetica')
+      .text(`Generated: ${new Date().toLocaleString()}`, { align: 'right' })
+      .text(`Total Leads: ${leads.length}`, { align: 'right' });
+    doc.moveDown(2);
+
+    // Add leads
+    leads.forEach((lead, index) => {
+      // Check if we need a new page
+      if (doc.y > 700) {
+        doc.addPage();
+      }
+
+      // Lead header
+      doc.fontSize(12).font('Helvetica-Bold')
+        .fillColor('#4F46E5')
+        .text(`${index + 1}. ${lead.name}`, { continued: false });
+
+      doc.fontSize(10).font('Helvetica').fillColor('#000000');
+
+      // Lead details in two columns
+      const leftColumn = 50;
+      const rightColumn = 300;
+      let currentY = doc.y;
+
+      // Left column
+      doc.y = currentY;
+      doc.x = leftColumn;
+      doc.text(`Company: ${lead.company}`, leftColumn);
+      doc.text(`Phone: ${lead.phone}`, leftColumn);
+      doc.text(`Email: ${lead.email || '-'}`, leftColumn);
+
+      // Right column
+      doc.y = currentY;
+      doc.text(`Source: ${lead.source?.name || '-'}`, rightColumn);
+      doc.text(`Status: ${lead.status}`, rightColumn);
+      doc.text(`Priority: ${lead.priority}`, rightColumn);
+
+      // Add separator line
+      doc.moveDown(0.5);
+      doc.strokeColor('#E5E7EB')
+        .lineWidth(1)
+        .moveTo(50, doc.y)
+        .lineTo(550, doc.y)
+        .stroke();
+      doc.moveDown(1);
+    });
+
+    // Add footer on last page
+    doc.fontSize(8).fillColor('#6B7280')
+      .text(
+        'Generated by Event Management System',
+        50,
+        doc.page.height - 50,
+        { align: 'center' }
+      );
+
+    // Finalize PDF
+    doc.end();
   } catch (err) {
     next(err);
   }
