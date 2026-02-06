@@ -17,6 +17,7 @@ const {
   getDirectMessages,
   getDMUnreadCount,
   getDMUnreadPerUser,
+  getDMConversations,
   markDMAsRead,
   // File upload
   uploadFile,
@@ -53,6 +54,7 @@ router.post('/dm/:recipientId/messages', sendDirectMessage);
 router.get('/dm/:otherUserId/messages', getDirectMessages);
 router.get('/dm/unread-count', getDMUnreadCount);
 router.get('/dm/unread-per-user', getDMUnreadPerUser);
+router.get('/dm/conversations', getDMConversations);
 router.post('/dm/:otherUserId/mark-read', markDMAsRead);
 
 // File Upload

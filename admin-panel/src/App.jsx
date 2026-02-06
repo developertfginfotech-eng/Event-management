@@ -20,6 +20,7 @@ import Tasks from './pages/Tasks'
 import TaskForm from './pages/TaskForm'
 import DailyReports from './pages/DailyReports'
 import DailyReportForm from './pages/DailyReportForm'
+import ChatPage from './pages/ChatPage'
 import Layout from './components/Layout'
 
 function App() {
@@ -246,6 +247,14 @@ function App() {
           <ProtectedRoute>
             <Layout setIsAuthenticated={setIsAuthenticated}>
               <DailyReports />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/chat" element={
+          <ProtectedRoute>
+            <Layout setIsAuthenticated={setIsAuthenticated}>
+              <ChatPage />
             </Layout>
           </ProtectedRoute>
         } />

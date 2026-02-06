@@ -770,6 +770,98 @@ exports.getDMUnreadPerUser = async (req, res, next) => {
   }
 };
 
+// @desc    Get last message info for all DM conversations
+// @route   GET /api/chat/dm/conversations
+// @access  Private
+exports.getDMConversations = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+
+    // Get all DM conversations with last message time
+    const conversations = await Message.aggregate([
+      {
+        $match: {
+          chatType: 'direct',
+          isDeleted: false,
+          $or: [
+            { sender: userId },
+            { recipient: userId }
+          ]
+        }
+      },
+      {
+        $sort: { createdAt: -1 }
+      },
+      {
+        $group: {
+          _id: {
+            $cond: [
+              { $eq: ['$sender', userId] },
+              '$recipient',
+              '$sender'
+            ]
+          },
+          lastMessageTime: { $first: '$createdAt' },
+          lastMessage: { $first: '$content' },
+          lastMessageType: { $first: '$messageType' }
+        }
+      },
+      {
+        $sort: { lastMessageTime: -1 }
+      }
+    ]);
+
+    // Also get unread counts
+    const unreadMessages = await Message.aggregate([
+      {
+        $match: {
+          chatType: 'direct',
+          recipient: userId,
+          isDeleted: false,
+          'readBy.user': { $ne: userId }
+        }
+      },
+      {
+        $group: {
+          _id: '$sender',
+          unreadCount: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Merge the data
+    const conversationsMap = {};
+    conversations.forEach(conv => {
+      const otherUserId = conv._id.toString();
+      conversationsMap[otherUserId] = {
+        lastMessageTime: conv.lastMessageTime,
+        lastMessage: conv.lastMessage,
+        lastMessageType: conv.lastMessageType,
+        unreadCount: 0
+      };
+    });
+
+    // Add unread counts
+    unreadMessages.forEach(msg => {
+      const senderId = msg._id.toString();
+      if (conversationsMap[senderId]) {
+        conversationsMap[senderId].unreadCount = msg.unreadCount;
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      data: conversationsMap
+    });
+  } catch (err) {
+    console.error('Get DM conversations error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching conversations'
+    });
+  }
+};
+
 // @desc    Mark DM messages as read
 // @route   POST /api/chat/dm/:otherUserId/mark-read
 // @access  Private

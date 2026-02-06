@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getEvents, getUnreadCount, getChatUsers, getDMUnreadCount, getDMUnreadPerUser } from '../../services/api';
+import { getEvents, getUnreadCount, getChatUsers, getDMUnreadCount, getDMConversations } from '../../services/api';
 import EventChat from '../EventChat/EventChat';
 import DirectChat from './DirectChat';
 import './FloatingChat.css';
@@ -107,16 +107,16 @@ function FloatingChat() {
 
   const fetchUnreadCounts = async () => {
     try {
-      const [eventUnread, dmUnread, dmPerUser] = await Promise.all([
+      const [eventUnread, dmUnread, dmConversations] = await Promise.all([
         getUnreadCount(),
         getDMUnreadCount(),
-        getDMUnreadPerUser()
+        getDMConversations()
       ]);
 
       // Store total unread count
       setEventUnreadCount(eventUnread.data.data?.totalUnread || 0);
       setDmUnreadCount(dmUnread.data.data?.unreadCount || 0);
-      setUserUnreadCounts(dmPerUser.data.data || {});
+      setUserUnreadCounts(dmConversations.data.data || {});
 
       // Store per-event unread counts as object { eventId: count }
       const eventCountsObj = {};
@@ -296,27 +296,27 @@ function FloatingChat() {
                   <span>No other users in the system</span>
                 </div>
               ) : (
-                // Sort users: those with unread messages first, then by last message time
+                // Sort users by last message time (most recent first)
                 [...chatUsers]
                   .sort((a, b) => {
-                    const aUnread = userUnreadCounts[a._id];
-                    const bUnread = userUnreadCounts[b._id];
+                    const aConvo = userUnreadCounts[a._id];
+                    const bConvo = userUnreadCounts[b._id];
 
-                    // Users with unread messages first
-                    if (aUnread && !bUnread) return -1;
-                    if (!aUnread && bUnread) return 1;
+                    // Users with conversations first
+                    if (aConvo && !bConvo) return -1;
+                    if (!aConvo && bConvo) return 1;
 
-                    // If both have unread, sort by last message time
-                    if (aUnread && bUnread) {
-                      return new Date(bUnread.lastMessageTime) - new Date(aUnread.lastMessageTime);
+                    // Both have conversations - sort by last message time
+                    if (aConvo && bConvo) {
+                      return new Date(bConvo.lastMessageTime) - new Date(aConvo.lastMessageTime);
                     }
 
-                    // Otherwise, keep original order
+                    // No conversations - keep original order
                     return 0;
                   })
                   .map((user) => {
-                    const unreadInfo = userUnreadCounts[user._id];
-                    const unreadCount = unreadInfo?.count || 0;
+                    const conversation = userUnreadCounts[user._id];
+                    const unreadCount = conversation?.unreadCount || 0;
 
                     return (
                       <div

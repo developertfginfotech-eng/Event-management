@@ -217,15 +217,15 @@
 }
 
 .message-avatar {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 18px;
   flex-shrink: 0;
   text-transform: uppercase;
 }
