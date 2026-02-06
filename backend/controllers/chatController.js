@@ -669,6 +669,51 @@ exports.getDMUnreadCount = async (req, res, next) => {
   }
 };
 
+// @desc    Get unread DM count per user
+// @route   GET /api/chat/dm/unread-per-user
+// @access  Private
+exports.getDMUnreadPerUser = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+
+    // Get unread DMs grouped by sender
+    const unreadMessages = await Message.aggregate([
+      {
+        $match: {
+          chatType: 'direct',
+          recipient: userId,
+          isDeleted: false,
+          'readBy.user': { $ne: userId }
+        }
+      },
+      {
+        $group: {
+          _id: '$sender',
+          unreadCount: { $sum: 1 },
+          lastMessageTime: { $max: '$createdAt' }
+        }
+      }
+    ]);
+
+    // Convert to object format for easy lookup
+    const unreadCounts = {};
+    unreadMessages.forEach(item => {
+      unreadCounts[item._id.toString()] = {
+        count: item.unreadCount,
+        lastMessageTime: item.lastMessageTime
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      data: unreadCounts
+    });
+  } catch (err) {
+    console.error('DM unread per user error:', err);
+    next(err);
+  }
+};
+
 // @desc    Upload file for chat
 // @route   POST /api/chat/upload
 // @access  Private

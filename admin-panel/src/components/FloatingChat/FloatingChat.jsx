@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getEvents, getUnreadCount, getChatUsers, getDMUnreadCount } from '../../services/api';
+import { getEvents, getUnreadCount, getChatUsers, getDMUnreadCount, getDMUnreadPerUser } from '../../services/api';
 import EventChat from '../EventChat/EventChat';
 import DirectChat from './DirectChat';
 import './FloatingChat.css';
@@ -18,6 +18,7 @@ function FloatingChat() {
   // Counts
   const [eventUnreadCount, setEventUnreadCount] = useState(0);
   const [dmUnreadCount, setDmUnreadCount] = useState(0);
+  const [userUnreadCounts, setUserUnreadCounts] = useState({}); // Per-user unread counts
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -105,12 +106,14 @@ function FloatingChat() {
 
   const fetchUnreadCounts = async () => {
     try {
-      const [eventUnread, dmUnread] = await Promise.all([
+      const [eventUnread, dmUnread, dmPerUser] = await Promise.all([
         getUnreadCount(),
-        getDMUnreadCount()
+        getDMUnreadCount(),
+        getDMUnreadPerUser()
       ]);
       setEventUnreadCount(eventUnread.data.data?.totalUnread || 0);
       setDmUnreadCount(dmUnread.data.data?.unreadCount || 0);
+      setUserUnreadCounts(dmPerUser.data.data || {});
     } catch (error) {
       console.error('Error fetching unread counts:', error);
     }
@@ -270,24 +273,50 @@ function FloatingChat() {
                   <span>No other users in the system</span>
                 </div>
               ) : (
-                chatUsers.map((user) => (
-                  <div
-                    key={user._id}
-                    className="floating-chat-item"
-                    onClick={() => handleUserSelect(user)}
-                  >
-                    <div className="item-avatar user-avatar">
-                      {user.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="item-info">
-                      <div className="item-name">{user.name}</div>
-                      <div className="item-meta">
-                        <span className="user-role">{user.role}</span>
+                // Sort users: those with unread messages first, then by last message time
+                [...chatUsers]
+                  .sort((a, b) => {
+                    const aUnread = userUnreadCounts[a._id];
+                    const bUnread = userUnreadCounts[b._id];
+
+                    // Users with unread messages first
+                    if (aUnread && !bUnread) return -1;
+                    if (!aUnread && bUnread) return 1;
+
+                    // If both have unread, sort by last message time
+                    if (aUnread && bUnread) {
+                      return new Date(bUnread.lastMessageTime) - new Date(aUnread.lastMessageTime);
+                    }
+
+                    // Otherwise, keep original order
+                    return 0;
+                  })
+                  .map((user) => {
+                    const unreadInfo = userUnreadCounts[user._id];
+                    const unreadCount = unreadInfo?.count || 0;
+
+                    return (
+                      <div
+                        key={user._id}
+                        className="floating-chat-item"
+                        onClick={() => handleUserSelect(user)}
+                      >
+                        <div className="item-avatar user-avatar">
+                          {user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="item-info">
+                          <div className="item-name">{user.name}</div>
+                          <div className="item-meta">
+                            <span className="user-role">{user.role}</span>
+                          </div>
+                        </div>
+                        {unreadCount > 0 && (
+                          <div className="item-badge">{unreadCount}</div>
+                        )}
+                        <div className="item-arrow">→</div>
                       </div>
-                    </div>
-                    <div className="item-arrow">→</div>
-                  </div>
-                ))
+                    );
+                  })
               )
             )}
           </div>

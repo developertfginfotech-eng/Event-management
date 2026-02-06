@@ -150,6 +150,7 @@ export const getDMToken = () => api.get('/chat/dm/auth-token')
 export const sendDirectMessage = (recipientId, data) => api.post(`/chat/dm/${recipientId}/messages`, data)
 export const getDirectMessages = (otherUserId, params) => api.get(`/chat/dm/${otherUserId}/messages`, { params })
 export const getDMUnreadCount = () => api.get('/chat/dm/unread-count')
+export const getDMUnreadPerUser = () => api.get('/chat/dm/unread-per-user')
 
 // Chat - File Upload
 export const uploadChatFile = (file) => {
