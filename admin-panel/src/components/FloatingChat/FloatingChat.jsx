@@ -160,6 +160,11 @@ function FloatingChat() {
     setShowModal(true);
   };
 
+  const handleMessagesRead = () => {
+    // Refresh unread counts when messages are marked as read
+    fetchUnreadCounts();
+  };
+
   return (
     <>
       {/* Floating Chat Button */}
@@ -345,6 +350,7 @@ function FloatingChat() {
                 eventName={selectedEvent.name}
                 isOpen={true}
                 onClose={handleClose}
+                onMessagesRead={handleMessagesRead}
               />
             ) : (
               <DirectChat
@@ -352,6 +358,7 @@ function FloatingChat() {
                 recipientName={selectedUser.name}
                 isOpen={true}
                 onClose={handleClose}
+                onMessagesRead={handleMessagesRead}
               />
             )}
           </div>

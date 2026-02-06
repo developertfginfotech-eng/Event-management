@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import pubnubService from '../../services/pubnubService';
-import { getDMToken, getDirectMessages, sendDirectMessage } from '../../services/api';
+import { getDMToken, getDirectMessages, sendDirectMessage, markDMAsRead } from '../../services/api';
 import ChatMessages from '../EventChat/ChatMessages';
 import ChatInput from '../EventChat/ChatInput';
 import '../EventChat/EventChat.css';
 
-function DirectChat({ recipientId, recipientName, isOpen, onClose }) {
+function DirectChat({ recipientId, recipientName, isOpen, onClose, onMessagesRead }) {
   const [messages, setMessages] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState('');
@@ -85,6 +85,18 @@ function DirectChat({ recipientId, recipientName, isOpen, onClose }) {
         initializedRef.current = true;
         setIsConnected(true);
         setLoading(false);
+
+        // Mark messages as read
+        try {
+          await markDMAsRead(recipientId);
+          // Notify parent to refresh unread counts
+          if (onMessagesRead) {
+            onMessagesRead();
+          }
+        } catch (err) {
+          console.error('Error marking messages as read:', err);
+          // Don't show error to user, just log it
+        }
       } catch (err) {
         console.error('DM initialization error:', err);
         const errorMsg = err.response?.data?.message || err.message || 'Failed to connect to chat';

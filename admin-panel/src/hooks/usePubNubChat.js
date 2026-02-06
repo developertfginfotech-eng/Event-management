@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import pubnubService from '../services/pubnubService';
-import { getChatToken, getEventMessages, sendChatMessage } from '../services/api';
+import { getChatToken, getEventMessages, sendChatMessage, markMessagesAsRead } from '../services/api';
 
-export const usePubNubChat = (eventId) => {
+export const usePubNubChat = (eventId, onMessagesRead) => {
   const [messages, setMessages] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState([]);
@@ -65,6 +65,24 @@ export const usePubNubChat = (eventId) => {
         }));
 
         setMessages(initialMessages.reverse());
+
+        // Mark unread messages as read
+        const unreadMessageIds = messagesResponse.data.data
+          .filter(msg => !msg.readBy?.some(r => r.user.toString() === user._id.toString()))
+          .map(msg => msg._id);
+
+        if (unreadMessageIds.length > 0) {
+          try {
+            await markMessagesAsRead(eventId, unreadMessageIds);
+            // Notify parent to refresh unread counts
+            if (onMessagesRead) {
+              onMessagesRead();
+            }
+          } catch (err) {
+            console.error('Error marking messages as read:', err);
+            // Don't show error to user, just log it
+          }
+        }
 
         // Subscribe to PubNub channel
         pubnubService.subscribe(

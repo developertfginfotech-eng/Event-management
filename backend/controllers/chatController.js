@@ -714,6 +714,45 @@ exports.getDMUnreadPerUser = async (req, res, next) => {
   }
 };
 
+// @desc    Mark DM messages as read
+// @route   POST /api/chat/dm/:otherUserId/mark-read
+// @access  Private
+exports.markDMAsRead = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { otherUserId } = req.params;
+
+    // Mark all unread messages from otherUserId to userId as read
+    const result = await Message.updateMany(
+      {
+        chatType: 'direct',
+        sender: otherUserId,
+        recipient: userId,
+        isDeleted: false,
+        'readBy.user': { $ne: userId }
+      },
+      {
+        $push: {
+          readBy: {
+            user: userId,
+            readAt: new Date()
+          }
+        }
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        modifiedCount: result.modifiedCount
+      }
+    });
+  } catch (err) {
+    console.error('Mark DM as read error:', err);
+    next(err);
+  }
+};
+
 // @desc    Upload file for chat
 // @route   POST /api/chat/upload
 // @access  Private

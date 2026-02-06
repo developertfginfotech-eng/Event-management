@@ -4,7 +4,7 @@ import ChatMessages from './ChatMessages';
 import ChatInput from './ChatInput';
 import './EventChat.css';
 
-function EventChat({ eventId, eventName, isOpen, onClose }) {
+function EventChat({ eventId, eventName, isOpen, onClose, onMessagesRead }) {
   const {
     messages,
     sendMessage,
@@ -15,7 +15,7 @@ function EventChat({ eventId, eventName, isOpen, onClose }) {
     loading,
     sending,
     messagesEndRef
-  } = usePubNubChat(eventId);
+  } = usePubNubChat(eventId, onMessagesRead);
 
   if (!isOpen) return null;
 
