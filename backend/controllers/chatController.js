@@ -794,13 +794,6 @@ exports.markDMAsRead = async (req, res) => {
     });
   }
 };
-
-// Helper function to get DM channel name (consistent ordering)
-function getDMChannelName(userId1, userId2) {
-  const ids = [userId1, userId2].sort();
-  return `dm-${ids[0]}-${ids[1]}`;
-}
-
 // @desc    Upload file for chat
 // @route   POST /api/chat/upload
 // @access  Private
