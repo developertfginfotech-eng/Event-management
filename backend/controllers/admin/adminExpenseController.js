@@ -4,9 +4,9 @@ const Event = require('../../models/Event');
 const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
 
-// @desc    Get all expenses (Admin view - no filtering by user)
+// @desc    Get all expenses (Admin sees all, Manager sees only their own)
 // @route   GET /api/admin/expenses
-// @access  Private (canApproveExpenses)
+// @access  Private (canViewReports)
 exports.getAllExpenses = async (req, res, next) => {
   try {
     const { event, user, status, category, search, startDate, endDate } = req.query;
@@ -29,7 +29,13 @@ exports.getAllExpenses = async (req, res, next) => {
       query.description = { $regex: search, $options: 'i' };
     }
 
-    // Admin sees ALL expenses (no user filtering)
+    // Role-based filtering:
+    // - Admins/Super Admins (canApproveExpenses) see ALL expenses
+    // - Managers (no canApproveExpenses) see only THEIR OWN expenses
+    if (!req.user.permissions.canApproveExpenses) {
+      query.user = req.user._id;
+    }
+
     const expenses = await Expense.find(query)
       .populate('event', 'name startDate endDate')
       .populate('user', 'name email')
@@ -48,7 +54,7 @@ exports.getAllExpenses = async (req, res, next) => {
 
 // @desc    Get single expense by ID
 // @route   GET /api/admin/expenses/:id
-// @access  Private (canApproveExpenses)
+// @access  Private (canViewReports)
 exports.getExpenseById = async (req, res, next) => {
   try {
     const expense = await Expense.findById(req.params.id)
@@ -63,7 +69,16 @@ exports.getExpenseById = async (req, res, next) => {
       });
     }
 
-    // Admin can view any expense
+    // Managers can only view their own expenses
+    // Admins/Super Admins can view any expense
+    if (!req.user.permissions.canApproveExpenses &&
+        expense.user._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to view this expense',
+      });
+    }
+
     res.status(200).json({
       success: true,
       data: expense,
