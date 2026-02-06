@@ -92,9 +92,13 @@ function Attendance() {
   }
 
   const handleAddNew = () => {
+    // Get current logged-in user
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
+    const currentUserId = currentUser._id || currentUser.id || ''
+
     setEditingRecord(null)
     setFormData({
-      user: '',
+      user: currentUserId, // Pre-fill with current user
       event: '',
       date: new Date().toISOString().split('T')[0],
       checkInTime: '',
