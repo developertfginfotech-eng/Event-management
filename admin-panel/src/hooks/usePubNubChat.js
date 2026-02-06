@@ -15,7 +15,7 @@ export const usePubNubChat = (eventId) => {
 
   // Helper to get user from localStorage with normalized ID
   const getCurrentUser = () => {
-    const user = getCurrentUser();
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
     // Backend returns 'id', but we need '_id'
     if (user.id && !user._id) {
       user._id = user.id;
