@@ -1849,10 +1849,17 @@ GET https://event-backend-lqu0.onrender.com/api/tasks?status=Pending&priority=Hi
 
 **Headers:** `Authorization: Bearer TOKEN`
 
+**Access Control:**
+- **Super Admin**: Can see ALL users' reports with filters
+- **Admin**: Can see ALL users' reports with filters
+- **Manager**: Can only see their OWN reports
+- **Field User**: Can only see their OWN reports
+
 **Query Parameters:**
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `event` | String | Filter by event ID |
+| `user` | String | Filter by user ID (Super Admin/Admin only) |
 | `status` | String | `Draft`, `Submitted`, `Approved`, `Rejected` |
 | `startDate` | String | Filter from date (YYYY-MM-DD) |
 | `endDate` | String | Filter to date (YYYY-MM-DD) |
@@ -1862,6 +1869,7 @@ GET https://event-backend-lqu0.onrender.com/api/tasks?status=Pending&priority=Hi
 GET https://event-backend-lqu0.onrender.com/api/daily-reports
 GET https://event-backend-lqu0.onrender.com/api/daily-reports?event=EVENT_ID
 GET https://event-backend-lqu0.onrender.com/api/daily-reports?status=Submitted
+GET https://event-backend-lqu0.onrender.com/api/daily-reports?user=USER_ID (Super Admin/Admin only)
 GET https://event-backend-lqu0.onrender.com/api/daily-reports?startDate=2024-02-01&endDate=2024-02-28
 ```
 
@@ -1911,6 +1919,12 @@ GET https://event-backend-lqu0.onrender.com/api/daily-reports?startDate=2024-02-
 **GET** `https://event-backend-lqu0.onrender.com/api/daily-reports/:id`
 
 **Headers:** `Authorization: Bearer TOKEN`
+
+**Access Control:**
+- **Super Admin**: Can view ANY report
+- **Admin**: Can view ANY report
+- **Manager**: Can only view their OWN reports
+- **Field User**: Can only view their OWN reports
 
 **URL Parameters:**
 | Parameter | Type | Description |

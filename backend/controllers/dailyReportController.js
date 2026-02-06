@@ -13,8 +13,9 @@ exports.getDailyReports = async (req, res, next) => {
     if (event) query.event = event;
     if (status) query.status = status;
 
-    // If not admin/manager, show only own reports
-    if (!req.user.permissions.canViewReports) {
+    // Only Super Admin can see all reports
+    // Manager and Field User can only see their own reports
+    if (req.user.role !== 'Super Admin') {
       query.user = req.user._id;
     } else if (user) {
       query.user = user;
@@ -61,9 +62,9 @@ exports.getDailyReport = async (req, res, next) => {
       });
     }
 
-    // Check if user has permission to view this report
+    // Only Super Admin can view all reports, others can only view their own
     if (
-      !req.user.permissions.canViewReports &&
+      req.user.role !== 'Super Admin' &&
       report.user._id.toString() !== req.user._id.toString()
     ) {
       return res.status(403).json({

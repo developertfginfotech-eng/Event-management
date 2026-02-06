@@ -38,10 +38,12 @@ function Expenses() {
     try {
       setLoading(true)
       const response = await getExpenses(filters)
-      setExpenses(response.data.data)
+      setExpenses(response.data.data || [])
     } catch (error) {
       console.error('Error loading expenses:', error)
-      alert('Error loading expenses')
+      const errorMsg = error.response?.data?.message || error.message || 'Error loading expenses'
+      alert(errorMsg)
+      setExpenses([]) // Set empty array on error
     } finally {
       setLoading(false)
     }

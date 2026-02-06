@@ -95,10 +95,11 @@ function Attendance() {
     // Get current logged-in user
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
     const currentUserId = currentUser._id || currentUser.id || ''
+    const isAdmin = currentUser.role === 'Super Admin' || currentUser.role === 'Admin'
 
     setEditingRecord(null)
     setFormData({
-      user: currentUserId, // Pre-fill with current user
+      user: isAdmin ? '' : currentUserId, // Admins can select any user, others default to self
       event: '',
       date: new Date().toISOString().split('T')[0],
       checkInTime: '',
@@ -404,12 +405,18 @@ function Attendance() {
                     value={formData.user}
                     onChange={handleFormChange}
                     required
+                    disabled={!editingRecord && JSON.parse(localStorage.getItem('user') || '{}').role !== 'Super Admin' && JSON.parse(localStorage.getItem('user') || '{}').role !== 'Admin'}
                   >
                     <option value="">Select User</option>
                     {users.map(user => (
                       <option key={user._id || user.id} value={user._id || user.id}>{user.name}</option>
                     ))}
                   </select>
+                  {JSON.parse(localStorage.getItem('user') || '{}').role !== 'Super Admin' && JSON.parse(localStorage.getItem('user') || '{}').role !== 'Admin' && !editingRecord && (
+                    <small style={{ color: '#6b7280', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                      You can only add your own attendance
+                    </small>
+                  )}
                 </div>
 
                 <div className="form-group">
