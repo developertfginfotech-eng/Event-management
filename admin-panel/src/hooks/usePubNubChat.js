@@ -349,6 +349,17 @@ export const usePubNubChat = (eventId, onMessagesRead) => {
     scrollToBottom();
   }, [messages.length, scrollToBottom]);
 
+  // Handle local message deletion
+  const handleLocalDelete = useCallback((messageId, deleteType) => {
+    if (deleteType === 'forEveryone') {
+      // Remove message from state
+      setMessages(prev => prev.filter(msg => msg.id !== messageId));
+    } else if (deleteType === 'forMe') {
+      // For "delete for me", we just remove it locally
+      setMessages(prev => prev.filter(msg => msg.id !== messageId));
+    }
+  }, []);
+
   return {
     messages,
     sendMessage,
@@ -358,6 +369,7 @@ export const usePubNubChat = (eventId, onMessagesRead) => {
     error,
     loading,
     sending,
-    messagesEndRef
+    messagesEndRef,
+    handleLocalDelete
   };
 };

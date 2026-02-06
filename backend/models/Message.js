@@ -63,6 +63,12 @@ const messageSchema = new mongoose.Schema(
       default: false
     },
     deletedAt: Date,
+    deletedFor: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      }
+    ],
     readBy: [
       {
         user: {

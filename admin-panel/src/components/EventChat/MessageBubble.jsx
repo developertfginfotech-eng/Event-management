@@ -1,4 +1,44 @@
-function MessageBubble({ message }) {
+import { useState, useRef, useEffect } from 'react';
+import { deleteMessage } from '../../services/api';
+
+function MessageBubble({ message, onDeleteMessage }) {
+  const [showDeleteMenu, setShowDeleteMenu] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowDeleteMenu(false);
+      }
+    };
+
+    if (showDeleteMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showDeleteMenu]);
+
+  const handleDelete = async (deleteType) => {
+    if (deleting) return;
+
+    try {
+      setDeleting(true);
+      await deleteMessage(message.id, deleteType);
+      setShowDeleteMenu(false);
+
+      // Notify parent component
+      if (onDeleteMessage) {
+        onDeleteMessage(message.id, deleteType);
+      }
+    } catch (error) {
+      console.error('Delete message error:', error);
+      alert(error.response?.data?.message || 'Failed to delete message');
+    } finally {
+      setDeleting(false);
+    }
+  };
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -125,6 +165,40 @@ function MessageBubble({ message }) {
             )}
           </div>
         </div>
+
+        {/* Delete Menu */}
+        {!message.isSending && (
+          <div className="message-actions" ref={menuRef}>
+            <button
+              className="message-menu-btn"
+              onClick={() => setShowDeleteMenu(!showDeleteMenu)}
+              title="Message options"
+            >
+              ⋮
+            </button>
+
+            {showDeleteMenu && (
+              <div className="delete-menu">
+                <button
+                  className="delete-option"
+                  onClick={() => handleDelete('forMe')}
+                  disabled={deleting}
+                >
+                  🗑️ Delete for me
+                </button>
+                {message.isOwn && (
+                  <button
+                    className="delete-option delete-everyone"
+                    onClick={() => handleDelete('forEveryone')}
+                    disabled={deleting}
+                  >
+                    🗑️ Delete for everyone
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {message.isOwn && (

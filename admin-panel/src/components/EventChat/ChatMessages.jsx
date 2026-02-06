@@ -1,6 +1,6 @@
 import MessageBubble from './MessageBubble';
 
-function ChatMessages({ messages, onLoadMore, messagesEndRef }) {
+function ChatMessages({ messages, onLoadMore, messagesEndRef, onDeleteMessage }) {
   const handleScroll = (e) => {
     const { scrollTop } = e.target;
     // Load more when scrolled near top
@@ -20,7 +20,7 @@ function ChatMessages({ messages, onLoadMore, messagesEndRef }) {
       ) : (
         <>
           {messages.map((message) => (
-            <MessageBubble key={message.id} message={message} />
+            <MessageBubble key={message.id} message={message} onDeleteMessage={onDeleteMessage} />
           ))}
           <div ref={messagesEndRef} />
         </>

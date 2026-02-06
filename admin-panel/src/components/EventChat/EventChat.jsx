@@ -14,7 +14,8 @@ function EventChat({ eventId, eventName, isOpen, onClose, onMessagesRead }) {
     error,
     loading,
     sending,
-    messagesEndRef
+    messagesEndRef,
+    handleLocalDelete
   } = usePubNubChat(eventId, onMessagesRead);
 
   if (!isOpen) return null;
@@ -46,6 +47,7 @@ function EventChat({ eventId, eventName, isOpen, onClose, onMessagesRead }) {
             messages={messages}
             onLoadMore={loadMore}
             messagesEndRef={messagesEndRef}
+            onDeleteMessage={handleLocalDelete}
           />
 
           <ChatInput

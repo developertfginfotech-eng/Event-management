@@ -141,7 +141,9 @@ export const getEventMessages = (eventId, params) => api.get(`/chat/events/${eve
 export const markMessagesAsRead = (eventId, messageIds) => api.post(`/chat/events/${eventId}/messages/mark-read`, { messageIds })
 export const getUnreadCount = () => api.get('/chat/unread-count')
 export const getEventUnreadCount = (eventId) => api.get(`/chat/events/${eventId}/unread-count`)
-export const deleteMessage = (messageId) => api.delete(`/chat/messages/${messageId}`)
+export const deleteMessage = (messageId, deleteType) => api.delete(`/chat/messages/${messageId}`, {
+  data: { deleteType } // 'forMe' or 'forEveryone'
+})
 export const getEventParticipants = (eventId) => api.get(`/chat/events/${eventId}/participants`)
 
 // Chat - Direct Messaging

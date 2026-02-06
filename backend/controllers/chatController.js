@@ -206,8 +206,12 @@ exports.getEventMessages = async (req, res, next) => {
       });
     }
 
-    // Build query
-    let query = { event: eventId, isDeleted: false };
+    // Build query - exclude deleted messages and messages deleted for this user
+    let query = {
+      event: eventId,
+      isDeleted: false,
+      deletedFor: { $ne: userId }
+    };
 
     // Pagination
     if (before) {
@@ -385,6 +389,7 @@ exports.getEventUnreadCount = async (req, res, next) => {
 exports.deleteMessage = async (req, res, next) => {
   try {
     const { messageId } = req.params;
+    const { deleteType } = req.body; // 'forMe' or 'forEveryone'
     const userId = req.user._id;
 
     const message = await Message.findById(messageId);
@@ -396,36 +401,71 @@ exports.deleteMessage = async (req, res, next) => {
       });
     }
 
-    // Only sender or admin can delete
     const isOwner = message.sender && message.sender.toString() === userId.toString();
     const isAdmin = req.user.role === 'Admin' || req.user.role === 'Super Admin';
 
-    if (!isOwner && !isAdmin) {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to delete this message'
-      });
+    // Determine channel name based on chat type
+    let channelName;
+    if (message.chatType === 'direct') {
+      channelName = getDMChannelName(message.sender.toString(), message.recipient.toString());
+    } else {
+      channelName = getEventChannelName(message.event);
     }
 
-    // Soft delete
-    message.isDeleted = true;
-    message.deletedAt = Date.now();
-    await message.save();
+    if (deleteType === 'forMe') {
+      // Delete for me - Add user to deletedFor array
+      if (!message.deletedFor.includes(userId)) {
+        message.deletedFor.push(userId);
+        await message.save();
+      }
 
-    // Publish deletion event to PubNub
-    const channelName = getEventChannelName(message.event);
-    await publishMessage(channelName, {
-      type: 'message_deleted',
-      messageId: messageId,
-      deletedBy: userId.toString(),
-      timestamp: new Date().toISOString()
-    });
+      res.status(200).json({
+        success: true,
+        message: 'Message deleted for you',
+        data: {
+          deleteType: 'forMe',
+          messageId: messageId
+        }
+      });
+    } else if (deleteType === 'forEveryone') {
+      // Delete for everyone - Only sender or admin can do this
+      if (!isOwner && !isAdmin) {
+        return res.status(403).json({
+          success: false,
+          message: 'Only the sender or admin can delete for everyone'
+        });
+      }
 
-    res.status(200).json({
-      success: true,
-      message: 'Message deleted successfully'
-    });
+      // Soft delete for everyone
+      message.isDeleted = true;
+      message.deletedAt = Date.now();
+      await message.save();
+
+      // Publish deletion event to PubNub
+      await publishMessage(channelName, {
+        type: 'message_deleted',
+        messageId: messageId,
+        deletedBy: userId.toString(),
+        deleteType: 'forEveryone',
+        timestamp: new Date().toISOString()
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Message deleted for everyone',
+        data: {
+          deleteType: 'forEveryone',
+          messageId: messageId
+        }
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid deleteType. Must be "forMe" or "forEveryone"'
+      });
+    }
   } catch (err) {
+    console.error('Delete message error:', err);
     next(err);
   }
 };
@@ -619,10 +659,11 @@ exports.getDirectMessages = async (req, res, next) => {
     const { limit = 50, before, after } = req.query;
     const currentUserId = req.user._id;
 
-    // Build query for messages between two users
+    // Build query for messages between two users (exclude messages deleted for current user)
     let query = {
       chatType: 'direct',
       isDeleted: false,
+      deletedFor: { $ne: currentUserId },
       $or: [
         { sender: currentUserId, recipient: otherUserId },
         { sender: otherUserId, recipient: currentUserId }
