@@ -90,6 +90,7 @@ export const usePubNubChat = (eventId, onMessagesRead) => {
         }
 
         // Subscribe to PubNub channel
+        console.log(`🔔 Subscribing to event channel: event-${eventId}`);
         pubnubService.subscribe(
           eventId,
           handleIncomingMessage,
@@ -103,6 +104,7 @@ export const usePubNubChat = (eventId, onMessagesRead) => {
         initializedRef.current = true;
         setIsConnected(true);
         setLoading(false);
+        console.log('✅ Chat initialized successfully');
       } catch (err) {
         console.error('Chat initialization error:', err);
         setError('Failed to connect to chat');
@@ -115,8 +117,10 @@ export const usePubNubChat = (eventId, onMessagesRead) => {
     // Cleanup on unmount
     return () => {
       if (initializedRef.current) {
+        console.log(`🔕 Unsubscribing from event channel: event-${eventId}`);
         pubnubService.unsubscribe(eventId);
         initializedRef.current = false;
+        setIsConnected(false);
       }
     };
   }, [eventId]);
@@ -147,6 +151,8 @@ export const usePubNubChat = (eventId, onMessagesRead) => {
 
   // Handle incoming PubNub message
   const handleIncomingMessage = useCallback((message) => {
+    console.log('📨 Received PubNub message:', message);
+
     const user = getCurrentUser();
 
     // Handle different message types
@@ -168,14 +174,14 @@ export const usePubNubChat = (eventId, onMessagesRead) => {
     }
 
     // Regular chat message
-    const isOwn = message.sender.id === user._id;
+    const isOwn = message.sender?.id === user._id || message.sender?.id === user.id;
     const newMessage = {
       id: message.messageId,
       user: {
-        id: message.sender.id,
-        name: message.sender.name,
-        role: message.sender.role,
-        avatar: message.sender.name[0]
+        id: message.sender?.id,
+        name: message.sender?.name,
+        role: message.sender?.role,
+        avatar: message.sender?.name?.[0] || 'U'
       },
       text: message.content,
       timestamp: new Date(message.timestamp),
@@ -185,9 +191,12 @@ export const usePubNubChat = (eventId, onMessagesRead) => {
       attachments: message.attachments || []
     };
 
+    console.log('✅ Adding new message to state:', newMessage);
+
     setMessages(prev => {
       // Avoid duplicates
       if (prev.some(msg => msg.id === newMessage.id)) {
+        console.log('⚠️ Duplicate message, skipping');
         return prev;
       }
 
@@ -196,6 +205,7 @@ export const usePubNubChat = (eventId, onMessagesRead) => {
         playNotificationSound();
       }
 
+      console.log('✅ Message added to state');
       return [...prev, newMessage];
     });
   }, []);
