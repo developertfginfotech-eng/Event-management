@@ -19,6 +19,7 @@ function FloatingChat() {
   const [eventUnreadCount, setEventUnreadCount] = useState(0);
   const [dmUnreadCount, setDmUnreadCount] = useState(0);
   const [userUnreadCounts, setUserUnreadCounts] = useState({}); // Per-user unread counts
+  const [eventUnreadCounts, setEventUnreadCounts] = useState({}); // Per-event unread counts
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -111,9 +112,20 @@ function FloatingChat() {
         getDMUnreadCount(),
         getDMUnreadPerUser()
       ]);
+
+      // Store total unread count
       setEventUnreadCount(eventUnread.data.data?.totalUnread || 0);
       setDmUnreadCount(dmUnread.data.data?.unreadCount || 0);
       setUserUnreadCounts(dmPerUser.data.data || {});
+
+      // Store per-event unread counts as object { eventId: count }
+      const eventCountsObj = {};
+      if (eventUnread.data.data?.byEvent) {
+        eventUnread.data.data.byEvent.forEach(item => {
+          eventCountsObj[item.eventId] = item.unreadCount;
+        });
+      }
+      setEventUnreadCounts(eventCountsObj);
     } catch (error) {
       console.error('Error fetching unread counts:', error);
     }
@@ -250,24 +262,30 @@ function FloatingChat() {
                   <span>You need to be assigned to events to chat</span>
                 </div>
               ) : (
-                userEvents.map((event) => (
-                  <div
-                    key={event._id}
-                    className="floating-chat-item"
-                    onClick={() => handleEventSelect(event)}
-                  >
-                    <div className="item-avatar event-avatar">📅</div>
-                    <div className="item-info">
-                      <div className="item-name">{event.name}</div>
-                      <div className="item-meta">
-                        <span className={`status-badge ${event.status.toLowerCase()}`}>
-                          {event.status}
-                        </span>
+                userEvents.map((event) => {
+                  const unreadCount = eventUnreadCounts[event._id] || 0;
+                  return (
+                    <div
+                      key={event._id}
+                      className="floating-chat-item"
+                      onClick={() => handleEventSelect(event)}
+                    >
+                      <div className="item-avatar event-avatar">📅</div>
+                      <div className="item-info">
+                        <div className="item-name">{event.name}</div>
+                        <div className="item-meta">
+                          <span className={`status-badge ${event.status.toLowerCase()}`}>
+                            {event.status}
+                          </span>
+                        </div>
                       </div>
+                      {unreadCount > 0 && (
+                        <div className="item-badge">{unreadCount}</div>
+                      )}
+                      <div className="item-arrow">→</div>
                     </div>
-                    <div className="item-arrow">→</div>
-                  </div>
-                ))
+                  );
+                })
               )
             ) : (
               // Users (Direct Messages) Tab

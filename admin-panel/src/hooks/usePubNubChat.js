@@ -49,20 +49,25 @@ export const usePubNubChat = (eventId, onMessagesRead) => {
 
         // Fetch initial messages from backend
         const messagesResponse = await getEventMessages(eventId, { limit: 50 });
-        const initialMessages = messagesResponse.data.data.map(msg => ({
-          id: msg._id,
-          user: {
-            id: msg.sender?._id,
-            name: msg.sender?.name || 'System',
-            role: msg.sender?.role,
-            avatar: msg.sender?.name?.[0] || 'S'
-          },
-          text: msg.content,
-          timestamp: new Date(msg.createdAt),
-          isOwn: msg.sender?._id === user._id,
-          messageType: msg.messageType || 'text',
-          attachments: msg.attachments || []
-        }));
+        const initialMessages = messagesResponse.data.data.map(msg => {
+          const isOwn = msg.sender?._id === user._id;
+          const isRead = isOwn && msg.readBy && msg.readBy.length > 1; // More than just sender
+          return {
+            id: msg._id,
+            user: {
+              id: msg.sender?._id,
+              name: msg.sender?.name || 'System',
+              role: msg.sender?.role,
+              avatar: msg.sender?.name?.[0] || 'S'
+            },
+            text: msg.content,
+            timestamp: new Date(msg.createdAt),
+            isOwn,
+            isRead,
+            messageType: msg.messageType || 'text',
+            attachments: msg.attachments || []
+          };
+        });
 
         setMessages(initialMessages.reverse());
 
@@ -151,7 +156,19 @@ export const usePubNubChat = (eventId, onMessagesRead) => {
       return;
     }
 
+    // Handle read receipt updates
+    if (message.type === 'message_read') {
+      setMessages(prev => prev.map(msg => {
+        if (msg.id === message.messageId && msg.isOwn) {
+          return { ...msg, isRead: true };
+        }
+        return msg;
+      }));
+      return;
+    }
+
     // Regular chat message
+    const isOwn = message.sender.id === user._id;
     const newMessage = {
       id: message.messageId,
       user: {
@@ -162,7 +179,8 @@ export const usePubNubChat = (eventId, onMessagesRead) => {
       },
       text: message.content,
       timestamp: new Date(message.timestamp),
-      isOwn: message.sender.id === user._id,
+      isOwn,
+      isRead: false, // New messages start as unread
       messageType: message.messageType || 'text',
       attachments: message.attachments || []
     };
@@ -282,20 +300,26 @@ export const usePubNubChat = (eventId, onMessagesRead) => {
         before
       });
 
-      const olderMessages = messagesResponse.data.data.map(msg => ({
-        id: msg._id,
-        user: {
-          id: msg.sender?._id,
-          name: msg.sender?.name || 'System',
-          role: msg.sender?.role,
-          avatar: msg.sender?.name?.[0] || 'S'
-        },
-        text: msg.content,
-        timestamp: new Date(msg.createdAt),
-        isOwn: msg.sender?._id === getCurrentUser()._id,
-        messageType: msg.messageType || 'text',
-        attachments: msg.attachments || []
-      }));
+      const user = getCurrentUser();
+      const olderMessages = messagesResponse.data.data.map(msg => {
+        const isOwn = msg.sender?._id === user._id;
+        const isRead = isOwn && msg.readBy && msg.readBy.length > 1;
+        return {
+          id: msg._id,
+          user: {
+            id: msg.sender?._id,
+            name: msg.sender?.name || 'System',
+            role: msg.sender?.role,
+            avatar: msg.sender?.name?.[0] || 'S'
+          },
+          text: msg.content,
+          timestamp: new Date(msg.createdAt),
+          isOwn,
+          isRead,
+          messageType: msg.messageType || 'text',
+          attachments: msg.attachments || []
+        };
+      });
 
       if (olderMessages.length > 0) {
         setMessages(prev => [...olderMessages.reverse(), ...prev]);

@@ -413,6 +413,29 @@
   font-style: italic;
 }
 
+.read-status {
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.read-status.sent {
+  color: #9ca3af;
+}
+
+.read-status.read {
+  color: #06b6d4;
+}
+
+.message-bubble.own-message .read-status.sent {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.message-bubble.own-message .read-status.read {
+  color: #67e8f9;
+}
+
 /* Chat Input */
 .chat-input-container {
   padding: 16px 20px;

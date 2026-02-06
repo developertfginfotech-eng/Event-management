@@ -272,6 +272,21 @@ exports.markMessagesAsRead = async (req, res, next) => {
       }
     );
 
+    // Publish read receipts via PubNub
+    if (messageIds && messageIds.length > 0) {
+      const channelName = getEventChannelName(eventId);
+
+      // Send read receipt for each message
+      for (const messageId of messageIds) {
+        await publishMessage(channelName, {
+          type: 'message_read',
+          messageId: messageId,
+          readBy: userId.toString(),
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+
     res.status(200).json({
       success: true,
       data: {
@@ -722,6 +737,15 @@ exports.markDMAsRead = async (req, res) => {
     const userId = req.user._id;
     const { otherUserId } = req.params;
 
+    // Get all unread messages before updating
+    const unreadMessages = await Message.find({
+      chatType: 'direct',
+      sender: otherUserId,
+      recipient: userId,
+      isDeleted: false,
+      'readBy.user': { $ne: userId }
+    }).select('_id');
+
     // Mark all unread messages from otherUserId to userId as read
     const result = await Message.updateMany(
       {
@@ -741,6 +765,21 @@ exports.markDMAsRead = async (req, res) => {
       }
     );
 
+    // Publish read receipts via PubNub
+    if (unreadMessages.length > 0) {
+      const channelName = getDMChannelName(userId.toString(), otherUserId.toString());
+
+      // Send read receipt for each message
+      for (const msg of unreadMessages) {
+        await publishMessage(channelName, {
+          type: 'message_read',
+          messageId: msg._id.toString(),
+          readBy: userId.toString(),
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+
     res.status(200).json({
       success: true,
       data: {
@@ -749,9 +788,18 @@ exports.markDMAsRead = async (req, res) => {
     });
   } catch (err) {
     console.error('Mark DM as read error:', err);
-    next(err);
+    res.status(500).json({
+      success: false,
+      message: 'Error marking messages as read'
+    });
   }
 };
+
+// Helper function to get DM channel name (consistent ordering)
+function getDMChannelName(userId1, userId2) {
+  const ids = [userId1, userId2].sort();
+  return `dm-${ids[0]}-${ids[1]}`;
+}
 
 // @desc    Upload file for chat
 // @route   POST /api/chat/upload

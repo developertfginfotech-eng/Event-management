@@ -118,6 +118,11 @@ function MessageBubble({ message }) {
           <div className="message-meta">
             <span className="message-time">{formatTime(message.timestamp)}</span>
             {message.isSending && <span className="sending-indicator">Sending...</span>}
+            {message.isOwn && !message.isSending && (
+              <span className={`read-status ${message.isRead ? 'read' : 'sent'}`}>
+                {message.isRead ? '✓✓' : '✓'}
+              </span>
+            )}
           </div>
         </div>
       </div>

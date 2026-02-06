@@ -55,19 +55,24 @@ function DirectChat({ recipientId, recipientName, isOpen, onClose, onMessagesRea
 
         // Fetch initial messages
         const messagesResponse = await getDirectMessages(recipientId, { limit: 50 });
-        const initialMessages = messagesResponse.data.data.map(msg => ({
-          id: msg._id,
-          user: {
-            id: msg.sender?._id,
-            name: msg.sender?.name || 'Unknown',
-            role: msg.sender?.role,
-            avatar: msg.sender?.name?.[0] || 'U'
-          },
-          text: msg.content,
-          timestamp: new Date(msg.createdAt),
-          isOwn: msg.sender?._id === user._id,
-          messageType: msg.messageType || 'text'
-        }));
+        const initialMessages = messagesResponse.data.data.map(msg => {
+          const isOwn = msg.sender?._id === user._id;
+          const isRead = msg.readBy?.some(r => r.user.toString() === recipientId.toString());
+          return {
+            id: msg._id,
+            user: {
+              id: msg.sender?._id,
+              name: msg.sender?.name || 'Unknown',
+              role: msg.sender?.role,
+              avatar: msg.sender?.name?.[0] || 'U'
+            },
+            text: msg.content,
+            timestamp: new Date(msg.createdAt),
+            isOwn,
+            isRead: isOwn ? isRead : false, // Only show read status for own messages
+            messageType: msg.messageType || 'text'
+          };
+        });
 
         setMessages(initialMessages.reverse());
 
@@ -150,6 +155,18 @@ function DirectChat({ recipientId, recipientName, isOpen, onClose, onMessagesRea
       return;
     }
 
+    // Handle read receipt updates
+    if (message.type === 'message_read') {
+      setMessages(prev => prev.map(msg => {
+        if (msg.id === message.messageId && msg.isOwn) {
+          return { ...msg, isRead: true };
+        }
+        return msg;
+      }));
+      return;
+    }
+
+    const isOwn = message.sender.id === user._id;
     const newMessage = {
       id: message.messageId,
       user: {
@@ -160,7 +177,8 @@ function DirectChat({ recipientId, recipientName, isOpen, onClose, onMessagesRea
       },
       text: message.content,
       timestamp: new Date(message.timestamp),
-      isOwn: message.sender.id === user._id,
+      isOwn,
+      isRead: false, // New messages start as unread
       messageType: message.messageType || 'text'
     };
 
@@ -250,19 +268,24 @@ function DirectChat({ recipientId, recipientName, isOpen, onClose, onMessagesRea
       });
 
       const user = getCurrentUser();
-      const olderMessages = messagesResponse.data.data.map(msg => ({
-        id: msg._id,
-        user: {
-          id: msg.sender?._id,
-          name: msg.sender?.name || 'Unknown',
-          role: msg.sender?.role,
-          avatar: msg.sender?.name?.[0] || 'U'
-        },
-        text: msg.content,
-        timestamp: new Date(msg.createdAt),
-        isOwn: msg.sender?._id === user._id,
-        messageType: msg.messageType || 'text'
-      }));
+      const olderMessages = messagesResponse.data.data.map(msg => {
+        const isOwn = msg.sender?._id === user._id;
+        const isRead = msg.readBy?.some(r => r.user.toString() === recipientId.toString());
+        return {
+          id: msg._id,
+          user: {
+            id: msg.sender?._id,
+            name: msg.sender?.name || 'Unknown',
+            role: msg.sender?.role,
+            avatar: msg.sender?.name?.[0] || 'U'
+          },
+          text: msg.content,
+          timestamp: new Date(msg.createdAt),
+          isOwn,
+          isRead: isOwn ? isRead : false,
+          messageType: msg.messageType || 'text'
+        };
+      });
 
       if (olderMessages.length > 0) {
         setMessages(prev => [...olderMessages.reverse(), ...prev]);
