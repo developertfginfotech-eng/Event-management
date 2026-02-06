@@ -121,8 +121,8 @@ function Layout({ children, setIsAuthenticated }) {
         </main>
       </div>
 
-      {/* Floating Chat Button */}
-      <FloatingChat />
+      {/* Floating Chat Button - Hide on chat page */}
+      {!location.pathname.startsWith('/chat') && <FloatingChat />}
     </div>
   )
 }

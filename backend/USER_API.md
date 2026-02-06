@@ -417,35 +417,127 @@ GET https://event-backend-lqu0.onrender.com/api/leads/6981f35a75abdaecf610b757
 
 **Headers:** `Authorization: Bearer TOKEN`
 
-**Request Body:**
+**Request Body Example (Minimal):**
 ```json
 {
   "name": "John Smith",
   "company": "ABC Corp",
   "phone": "+1234567890",
+  "source": "EVENT_ID"
+}
+```
+
+**Request Body Example (Complete):**
+```json
+{
+  "name": "John Smith",
+  "company": "ABC Corp",
+  "phone": "+1234567890",
+  "phones": [
+    {
+      "number": "+1234567890",
+      "type": "Primary",
+      "isPrimary": true
+    },
+    {
+      "number": "+9876543210",
+      "type": "WhatsApp",
+      "isPrimary": false
+    }
+  ],
   "email": "john@abc.com",
-  "designation": "Manager",
+  "designation": "Marketing Manager",
+  "linkedin": "https://linkedin.com/in/johnsmith",
+  "location": {
+    "country": "India",
+    "state": "Delhi",
+    "city": "New Delhi"
+  },
+  "website": "https://www.abccorp.com",
+  "socialLinks": {
+    "linkedin": "https://linkedin.com/company/abccorp",
+    "facebook": "https://facebook.com/abccorp",
+    "instagram": "https://instagram.com/abccorp",
+    "twitter": "https://twitter.com/abccorp",
+    "youtube": "https://youtube.com/@abccorp",
+    "other": "https://other-platform.com/abccorp"
+  },
+  "industry": "Technology",
+  "serviceInterestedIn": "Digital Marketing",
+  "briefRequirement": "Looking for complete digital marketing solutions including social media and website development",
+  "interestedIn": "Social Media",
+  "interestedInOther": "",
   "source": "EVENT_ID",
   "priority": "High",
-  "status": "New"
+  "status": "New",
+  "businessCardImage": "/uploads/business-cards/card-1707132000000.jpg",
+  "customFields": {
+    "budget": "50000-100000",
+    "timeline": "3 months",
+    "referredBy": "Jane Doe"
+  }
 }
 ```
 
 **Required Fields:**
 | Field | Type | Description |
 |-------|------|-------------|
-| `name` | String | Lead name |
-| `company` | String | Company name |
-| `phone` | String | Phone number |
-| `source` | String | Event ID (MongoDB ObjectId) |
+| `name` | String | Lead contact name |
+| `company` | String | Company/Organization name |
+| `phone` | String | Primary phone number |
+| `source` | String | Event ID (MongoDB ObjectId) where lead was collected |
 
-**Optional Fields:**
-| Field | Type | Default |
-|-------|------|---------|
-| `email` | String | - |
-| `designation` | String | - |
-| `priority` | String | `Medium` |
-| `status` | String | `New` |
+**Optional Fields - Contact Information:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `phones` | Array | Array of phone objects (see structure below) |
+| `email` | String | Email address (must be valid format) |
+| `designation` | String | Job title/designation |
+| `linkedin` | String | LinkedIn profile URL |
+
+**Optional Fields - Company Information:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `location.country` | String | Country name |
+| `location.state` | String | State/Province name |
+| `location.city` | String | City name |
+| `website` | String | Company website URL |
+| `industry` | String | Industry/Business sector |
+
+**Optional Fields - Social Media:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `socialLinks.linkedin` | String | Company LinkedIn URL |
+| `socialLinks.facebook` | String | Company Facebook URL |
+| `socialLinks.instagram` | String | Company Instagram URL |
+| `socialLinks.twitter` | String | Company Twitter URL |
+| `socialLinks.youtube` | String | Company YouTube URL |
+| `socialLinks.other` | String | Other social media URL |
+
+**Optional Fields - Lead Details:**
+| Field | Type | Options/Default | Description |
+|-------|------|-----------------|-------------|
+| `serviceInterestedIn` | String | - | Service they're interested in |
+| `briefRequirement` | String | - | Brief description of requirements |
+| `interestedIn` | String | `Print Ads`, `Documentary`, `Interview`, `Website Ads`, `Social Media`, `Event Coverage`, `Other`, `` | Category of interest |
+| `interestedInOther` | String | - | Specify if interestedIn is "Other" |
+| `priority` | String | `High`, `Medium` (default), `Low` | Lead priority |
+| `status` | String | `New` (default), `Contacted`, `Follow-up`, `Qualified`, `Converted`, `Lost` | Lead status |
+
+**Optional Fields - Additional:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `businessCardImage` | String | File path from file upload API |
+| `customFields` | Object | Key-value pairs for custom data |
+
+**Phones Array Structure:**
+```json
+{
+  "number": "String (required)",
+  "type": "Primary | Secondary | WhatsApp (default: Primary)",
+  "isPrimary": "Boolean (default: false)"
+}
+```
 
 **Response:**
 ```json
@@ -457,13 +549,37 @@ GET https://event-backend-lqu0.onrender.com/api/leads/6981f35a75abdaecf610b757
     "name": "John Smith",
     "company": "ABC Corp",
     "phone": "+1234567890",
-    "source": "EVENT_ID",
+    "email": "john@abc.com",
+    "designation": "Marketing Manager",
+    "location": {
+      "country": "India",
+      "state": "Delhi",
+      "city": "New Delhi"
+    },
+    "source": {
+      "_id": "EVENT_ID",
+      "name": "Tech Expo 2024"
+    },
     "status": "New",
     "priority": "High",
-    "createdAt": "2024-02-05T10:00:00Z"
+    "industry": "Technology",
+    "serviceInterestedIn": "Digital Marketing",
+    "createdBy": {
+      "_id": "USER_ID",
+      "name": "Your Name"
+    },
+    "createdAt": "2024-02-05T10:00:00Z",
+    "updatedAt": "2024-02-05T10:00:00Z"
   }
 }
 ```
+
+**Note:**
+- Upload business card image first using File Upload API at `/api/files/upload`
+- Use returned file path in `businessCardImage` field
+- All URLs must start with `http://` or `https://`
+- Email must be in valid format
+- `customFields` can store any additional key-value data you need
 
 ---
 
