@@ -15,7 +15,7 @@ export const usePubNubChat = (eventId) => {
 
   // Helper to get user from localStorage with normalized ID
   const getCurrentUser = () => {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const user = getCurrentUser();
     // Backend returns 'id', but we need '_id'
     if (user.id && !user._id) {
       user._id = user.id;
@@ -33,7 +33,7 @@ export const usePubNubChat = (eventId) => {
         setError('');
 
         // Get current user
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const user = getCurrentUser();
         if (!user._id) {
           setError('User not authenticated');
           setLoading(false);
@@ -100,7 +100,7 @@ export const usePubNubChat = (eventId) => {
 
   // Handle incoming PubNub message
   const handleIncomingMessage = useCallback((message) => {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const user = getCurrentUser();
 
     // Handle different message types
     if (message.type === 'message_deleted') {
@@ -180,7 +180,7 @@ export const usePubNubChat = (eventId) => {
       setSending(true);
       setError('');
 
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const user = getCurrentUser();
 
       // Optimistic update
       const tempMessage = {
@@ -244,7 +244,7 @@ export const usePubNubChat = (eventId) => {
         },
         text: msg.content,
         timestamp: new Date(msg.createdAt),
-        isOwn: msg.sender?._id === JSON.parse(localStorage.getItem('user') || '{}')._id,
+        isOwn: msg.sender?._id === getCurrentUser()._id,
         messageType: msg.messageType || 'text',
         attachments: msg.attachments || []
       }));
