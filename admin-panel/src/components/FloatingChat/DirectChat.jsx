@@ -107,6 +107,29 @@ function DirectChat({ recipientId, recipientName, isOpen, onClose }) {
     };
   }, [recipientId]);
 
+  // Play notification sound
+  const playNotificationSound = () => {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    } catch (error) {
+      console.error('Error playing notification sound:', error);
+    }
+  };
+
   const handleIncomingMessage = useCallback((message) => {
     const user = getCurrentUser();
 
@@ -133,6 +156,12 @@ function DirectChat({ recipientId, recipientName, isOpen, onClose }) {
       if (prev.some(msg => msg.id === newMessage.id)) {
         return prev;
       }
+
+      // Play notification sound for incoming messages (not own messages)
+      if (!newMessage.isOwn) {
+        playNotificationSound();
+      }
+
       return [...prev, newMessage];
     });
   }, []);
