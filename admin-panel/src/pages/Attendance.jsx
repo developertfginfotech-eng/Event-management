@@ -106,10 +106,11 @@ function Attendance() {
   }
 
   const handleEdit = (record) => {
+    console.log('Editing record:', record); // Debug log
     setEditingRecord(record)
     setFormData({
-      user: record.user?._id || '',
-      event: record.event?._id || '',
+      user: record.user?._id || record.user?.id || record.user || '',
+      event: record.event?._id || record.event?.id || record.event || '',
       date: record.date ? new Date(record.date).toISOString().split('T')[0] : '',
       checkInTime: record.checkIn?.time ? new Date(record.checkIn.time).toISOString().slice(0, 16) : '',
       checkOutTime: record.checkOut?.time ? new Date(record.checkOut.time).toISOString().slice(0, 16) : '',
@@ -402,7 +403,7 @@ function Attendance() {
                   >
                     <option value="">Select User</option>
                     {users.map(user => (
-                      <option key={user._id} value={user._id}>{user.name}</option>
+                      <option key={user._id || user.id} value={user._id || user.id}>{user.name}</option>
                     ))}
                   </select>
                 </div>
@@ -417,7 +418,7 @@ function Attendance() {
                   >
                     <option value="">Select Event</option>
                     {events.map(event => (
-                      <option key={event._id} value={event._id}>{event.name}</option>
+                      <option key={event._id || event.id} value={event._id || event.id}>{event.name}</option>
                     ))}
                   </select>
                 </div>

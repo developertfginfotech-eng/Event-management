@@ -1,7 +1,49 @@
 # Event Management System - Mobile App API Documentation
 
-**Version:** 1.0
+**Version:** 2.0
 **Base URL:** `https://event-backend-lqu0.onrender.com`
+**Last Updated:** February 6, 2026
+
+---
+
+## 📋 What's New in Version 2.0
+
+### Lead Management - Major Update
+- ✅ **Complete Lead Fields**: Added 30+ fields for comprehensive lead capture
+  - Multiple phone numbers with types (Primary, Secondary, WhatsApp)
+  - Social media links (LinkedIn, Facebook, Instagram, Twitter, YouTube)
+  - Location details (Country, State, City)
+  - Industry and service requirements
+  - Custom fields for flexible data storage
+
+- ✅ **New Endpoints Added**:
+  - `POST /api/leads/:id/followups` - Schedule follow-ups
+  - `PUT /api/leads/:id/followups/:followupId` - Mark follow-ups complete
+  - `POST /api/leads/:id/attachments` - Attach files (proposals, documents)
+  - `POST /api/leads/scan-business-card` - OCR business card scanning
+  - `GET /api/leads/reminders` - Get upcoming follow-up reminders
+
+- ✅ **Updated Lead Structure**:
+  - Business card image upload support
+  - Multiple phone numbers with labels
+  - Social media profile links
+  - Follow-up tracking with completion status
+  - File attachments for proposals/documents
+  - Custom fields for any additional data
+
+### Examples for Frontend Developer
+**Quick Start - Minimal Lead:**
+```json
+{
+  "name": "John Smith",
+  "company": "ABC Corp",
+  "phone": "+1234567890",
+  "source": "EVENT_ID"
+}
+```
+
+**Complete Lead with All Fields:**
+See section 4.3 for full example with 30+ fields
 
 ---
 
@@ -342,17 +384,41 @@ GET https://event-backend-lqu0.onrender.com/api/leads?search=john
       "name": "John Smith",
       "company": "ABC Corp",
       "phone": "+1234567890",
+      "phones": [
+        {
+          "number": "+1234567890",
+          "type": "Primary",
+          "isPrimary": true
+        }
+      ],
       "email": "john@abc.com",
-      "designation": "Manager",
+      "designation": "Marketing Manager",
+      "linkedin": "https://linkedin.com/in/johnsmith",
+      "location": {
+        "country": "India",
+        "state": "Delhi",
+        "city": "New Delhi"
+      },
+      "website": "https://www.abccorp.com",
+      "industry": "Technology",
+      "serviceInterestedIn": "Digital Marketing",
+      "interestedIn": "Social Media",
       "source": {
         "_id": "EVENT_ID",
         "name": "Tech Expo 2024"
       },
       "status": "New",
       "priority": "High",
-      "assignedTo": {...},
-      "createdBy": {...},
-      "createdAt": "2024-02-05T10:00:00Z"
+      "assignedTo": {
+        "_id": "USER_ID",
+        "name": "Manager Name"
+      },
+      "createdBy": {
+        "_id": "USER_ID",
+        "name": "Your Name"
+      },
+      "createdAt": "2024-02-05T10:00:00Z",
+      "updatedAt": "2024-02-05T10:00:00Z"
     }
   ]
 }
@@ -384,28 +450,97 @@ GET https://event-backend-lqu0.onrender.com/api/leads/6981f35a75abdaecf610b757
     "name": "John Smith",
     "company": "ABC Corp",
     "phone": "+1234567890",
+    "phones": [
+      {
+        "number": "+1234567890",
+        "type": "Primary",
+        "isPrimary": true
+      },
+      {
+        "number": "+9876543210",
+        "type": "WhatsApp",
+        "isPrimary": false
+      }
+    ],
     "email": "john@abc.com",
-    "designation": "Manager",
-    "source": {...},
-    "status": "New",
+    "designation": "Marketing Manager",
+    "linkedin": "https://linkedin.com/in/johnsmith",
+    "location": {
+      "country": "India",
+      "state": "Delhi",
+      "city": "New Delhi"
+    },
+    "website": "https://www.abccorp.com",
+    "socialLinks": {
+      "linkedin": "https://linkedin.com/company/abccorp",
+      "facebook": "https://facebook.com/abccorp",
+      "instagram": "https://instagram.com/abccorp"
+    },
+    "industry": "Technology",
+    "serviceInterestedIn": "Digital Marketing",
+    "briefRequirement": "Looking for complete digital marketing solutions",
+    "interestedIn": "Social Media",
+    "source": {
+      "_id": "EVENT_ID",
+      "name": "Tech Expo 2024"
+    },
+    "status": "Contacted",
     "priority": "High",
+    "assignedTo": {
+      "_id": "USER_ID",
+      "name": "Manager Name"
+    },
+    "createdBy": {
+      "_id": "USER_ID",
+      "name": "Your Name"
+    },
+    "businessCardImage": "/uploads/business-cards/card.jpg",
     "notes": [
       {
         "_id": "NOTE_ID",
-        "content": "Initial contact made",
-        "createdBy": {...},
+        "text": "Initial contact made, very interested",
+        "createdBy": {
+          "_id": "USER_ID",
+          "name": "Your Name"
+        },
         "createdAt": "2024-02-05T11:00:00Z"
       }
     ],
     "communications": [
       {
         "_id": "COMM_ID",
-        "type": "Call",
-        "notes": "Discussed product features",
-        "createdBy": {...},
+        "type": "call",
+        "notes": "Discussed product features and pricing",
+        "createdBy": {
+          "_id": "USER_ID",
+          "name": "Your Name"
+        },
         "createdAt": "2024-02-05T12:00:00Z"
       }
-    ]
+    ],
+    "followUps": [
+      {
+        "_id": "FOLLOWUP_ID",
+        "date": "2024-02-10T10:00:00Z",
+        "description": "Follow up call to discuss proposal",
+        "completed": false,
+        "createdAt": "2024-02-05T13:00:00Z"
+      }
+    ],
+    "attachments": [
+      {
+        "_id": "ATTACHMENT_ID",
+        "name": "Proposal.pdf",
+        "url": "/uploads/attachments/proposal.pdf",
+        "uploadedAt": "2024-02-05T14:00:00Z"
+      }
+    ],
+    "customFields": {
+      "budget": "50000-100000",
+      "timeline": "3 months"
+    },
+    "createdAt": "2024-02-05T10:00:00Z",
+    "updatedAt": "2024-02-05T15:00:00Z"
   }
 }
 ```
@@ -591,16 +726,54 @@ GET https://event-backend-lqu0.onrender.com/api/leads/6981f35a75abdaecf610b757
 **URL Parameters:**
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `id` | String | Lead ID |
+| `id` | String | Lead ID (MongoDB ObjectId) |
 
-**Request Body:**
+**Request Body (All fields optional - send only fields to update):**
 ```json
 {
+  "name": "John Smith Updated",
+  "company": "ABC Corp Ltd",
+  "phone": "+1234567890",
+  "phones": [
+    {
+      "number": "+1234567890",
+      "type": "Primary",
+      "isPrimary": true
+    }
+  ],
+  "email": "newemail@abc.com",
+  "designation": "Senior Marketing Manager",
+  "linkedin": "https://linkedin.com/in/johnsmith-updated",
+  "location": {
+    "country": "India",
+    "state": "Maharashtra",
+    "city": "Mumbai"
+  },
+  "website": "https://www.abccorp-updated.com",
+  "socialLinks": {
+    "linkedin": "https://linkedin.com/company/abccorp-updated"
+  },
+  "industry": "IT Services",
+  "serviceInterestedIn": "Mobile App Development",
+  "briefRequirement": "Updated requirement details",
+  "interestedIn": "Website Ads",
   "status": "Contacted",
   "priority": "Medium",
-  "email": "newemail@abc.com"
+  "businessCardImage": "/uploads/business-cards/new-card.jpg",
+  "customFields": {
+    "budget": "100000-200000",
+    "timeline": "6 months"
+  }
 }
 ```
+
+**Updatable Fields:**
+- All contact fields (name, company, phone, phones, email, designation, linkedin)
+- All company fields (location, website, socialLinks, industry)
+- All lead detail fields (serviceInterestedIn, briefRequirement, interestedIn, interestedInOther)
+- Status and priority
+- businessCardImage
+- customFields
 
 **Response:**
 ```json
@@ -609,13 +782,21 @@ GET https://event-backend-lqu0.onrender.com/api/leads/6981f35a75abdaecf610b757
   "message": "Lead updated successfully",
   "data": {
     "_id": "LEAD_ID",
+    "name": "John Smith Updated",
+    "company": "ABC Corp Ltd",
     "status": "Contacted",
     "priority": "Medium",
     "email": "newemail@abc.com",
+    "designation": "Senior Marketing Manager",
     "updatedAt": "2024-02-05T11:00:00Z"
   }
 }
 ```
+
+**Note:**
+- Send only the fields you want to update
+- Cannot update `source`, `createdBy`, `assignedTo` via this endpoint
+- Use specific endpoints for notes, communications, followups
 
 ---
 
@@ -653,7 +834,7 @@ GET https://event-backend-lqu0.onrender.com/api/leads/6981f35a75abdaecf610b757
 **Request Body:**
 ```json
 {
-  "content": "Follow-up scheduled for next week"
+  "text": "Follow-up scheduled for next week"
 }
 ```
 
@@ -667,8 +848,11 @@ GET https://event-backend-lqu0.onrender.com/api/leads/6981f35a75abdaecf610b757
     "notes": [
       {
         "_id": "NOTE_ID",
-        "content": "Follow-up scheduled for next week",
-        "createdBy": {...},
+        "text": "Follow-up scheduled for next week",
+        "createdBy": {
+          "_id": "USER_ID",
+          "name": "Your Name"
+        },
         "createdAt": "2024-02-05T11:00:00Z"
       }
     ]
@@ -691,12 +875,12 @@ GET https://event-backend-lqu0.onrender.com/api/leads/6981f35a75abdaecf610b757
 **Request Body:**
 ```json
 {
-  "type": "Call",
+  "type": "call",
   "notes": "Discussed pricing and delivery timelines"
 }
 ```
 
-**Communication Types:** `Call`, `Email`, `Meeting`, `Other`
+**Communication Types:** `call`, `email`, `whatsapp`, `meeting`, `other` (lowercase)
 
 **Response:**
 ```json
@@ -708,15 +892,249 @@ GET https://event-backend-lqu0.onrender.com/api/leads/6981f35a75abdaecf610b757
     "communications": [
       {
         "_id": "COMM_ID",
-        "type": "Call",
+        "type": "call",
         "notes": "Discussed pricing and delivery timelines",
-        "createdBy": {...},
+        "createdBy": {
+          "_id": "USER_ID",
+          "name": "Your Name"
+        },
         "createdAt": "2024-02-05T12:00:00Z"
       }
     ]
   }
 }
 ```
+
+---
+
+### 4.8 Add Follow-Up to Lead
+**POST** `https://event-backend-lqu0.onrender.com/api/leads/:id/followups`
+
+**Headers:** `Authorization: Bearer TOKEN`
+
+**URL Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | String | Lead ID |
+
+**Request Body:**
+```json
+{
+  "date": "2024-02-15T10:00:00Z",
+  "description": "Follow up call to discuss proposal details"
+}
+```
+
+**Required Fields:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `date` | String | Follow-up date/time (ISO 8601 format) |
+| `description` | String | Follow-up description |
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Follow-up added successfully",
+  "data": {
+    "_id": "LEAD_ID",
+    "followUps": [
+      {
+        "_id": "FOLLOWUP_ID",
+        "date": "2024-02-15T10:00:00Z",
+        "description": "Follow up call to discuss proposal details",
+        "completed": false,
+        "createdAt": "2024-02-05T10:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 4.9 Update Follow-Up Status
+**PUT** `https://event-backend-lqu0.onrender.com/api/leads/:id/followups/:followupId`
+
+**Headers:** `Authorization: Bearer TOKEN`
+
+**URL Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | String | Lead ID |
+| `followupId` | String | Follow-up ID |
+
+**Request Body:**
+```json
+{
+  "completed": true,
+  "description": "Updated description"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Follow-up updated successfully",
+  "data": {
+    "_id": "LEAD_ID",
+    "followUps": [
+      {
+        "_id": "FOLLOWUP_ID",
+        "date": "2024-02-15T10:00:00Z",
+        "description": "Updated description",
+        "completed": true,
+        "createdAt": "2024-02-05T10:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 4.10 Attach File to Lead
+**POST** `https://event-backend-lqu0.onrender.com/api/leads/:id/attachments`
+
+**Headers:** `Authorization: Bearer TOKEN`
+
+**URL Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | String | Lead ID |
+
+**Request Body:**
+```json
+{
+  "attachments": [
+    {
+      "name": "Proposal Document.pdf",
+      "url": "/uploads/attachments/proposal-1707132000000.pdf"
+    },
+    {
+      "name": "Company Profile.pdf",
+      "url": "/uploads/attachments/profile-1707132000000.pdf"
+    }
+  ]
+}
+```
+
+**Required Fields:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `attachments` | Array | Array of attachment objects |
+| `attachments[].name` | String | File name |
+| `attachments[].url` | String | File path from file upload API |
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Attachments added successfully",
+  "data": {
+    "_id": "LEAD_ID",
+    "attachments": [
+      {
+        "_id": "ATTACHMENT_ID",
+        "name": "Proposal Document.pdf",
+        "url": "/uploads/attachments/proposal.pdf",
+        "uploadedAt": "2024-02-05T10:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+**Note:** Upload files first using File Upload API at `/api/files/upload`, then use returned paths.
+
+---
+
+### 4.11 Scan Business Card
+**POST** `https://event-backend-lqu0.onrender.com/api/leads/scan-business-card`
+
+**Headers:** `Authorization: Bearer TOKEN`
+
+**Request Body:**
+```json
+{
+  "imageUrl": "/uploads/business-cards/card-1707132000000.jpg"
+}
+```
+
+**Required Fields:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `imageUrl` | String | File path from file upload API |
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Business card scanned successfully",
+  "data": {
+    "name": "John Smith",
+    "company": "ABC Corp",
+    "phone": "+1234567890",
+    "email": "john@abc.com",
+    "designation": "Marketing Manager",
+    "website": "https://www.abccorp.com",
+    "address": "123 Main St, New Delhi"
+  }
+}
+```
+
+**Note:**
+- Upload business card image first using File Upload API
+- This endpoint uses OCR to extract text from business card
+- Extracted data can be used to pre-fill lead creation form
+- Accuracy depends on image quality
+
+---
+
+### 4.12 Get My Reminders
+**GET** `https://event-backend-lqu0.onrender.com/api/leads/reminders`
+
+**Headers:** `Authorization: Bearer TOKEN`
+
+**Query Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `startDate` | String | Filter from date (YYYY-MM-DD) |
+| `endDate` | String | Filter to date (YYYY-MM-DD) |
+
+**Example:**
+```
+GET https://event-backend-lqu0.onrender.com/api/leads/reminders
+GET https://event-backend-lqu0.onrender.com/api/leads/reminders?startDate=2024-02-01&endDate=2024-02-28
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "count": 5,
+  "data": [
+    {
+      "_id": "FOLLOWUP_ID",
+      "lead": {
+        "_id": "LEAD_ID",
+        "name": "John Smith",
+        "company": "ABC Corp",
+        "phone": "+1234567890",
+        "status": "Contacted",
+        "priority": "High"
+      },
+      "date": "2024-02-15T10:00:00Z",
+      "description": "Follow up call to discuss proposal details",
+      "completed": false,
+      "createdAt": "2024-02-05T10:00:00Z"
+    }
+  ]
+}
+```
+
+**Note:** Returns all upcoming and pending follow-ups for your leads
 
 ---
 
@@ -1497,6 +1915,11 @@ fetch('https://event-backend-lqu0.onrender.com/api/files/upload', {
 | DELETE | `/api/leads/:id` | Delete lead |
 | POST | `/api/leads/:id/notes` | Add note |
 | POST | `/api/leads/:id/communications` | Add communication |
+| POST | `/api/leads/:id/followups` | Add follow-up |
+| PUT | `/api/leads/:id/followups/:followupId` | Update follow-up |
+| POST | `/api/leads/:id/attachments` | Attach file |
+| POST | `/api/leads/scan-business-card` | Scan business card |
+| GET | `/api/leads/reminders` | Get my reminders |
 | **Expenses** |
 | GET | `/api/expenses` | Get my expenses |
 | GET | `/api/expenses/:id` | Get expense by ID |
