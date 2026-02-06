@@ -1,8 +1,8 @@
 # Chat Feature API Documentation for Frontend Developers
 
-**Version:** 2.0 (New Chat Features)
+**Version:** 2.1 (WhatsApp-Style Chat + Delete Features)
 **Base URL:** `https://event-backend-lqu0.onrender.com`
-**Last Updated:** February 2026
+**Last Updated:** February 6, 2026
 
 ---
 
@@ -20,6 +20,14 @@
 
 ## Overview
 
+### 🆕 What's New in Version 2.1?
+
+- ✅ **WhatsApp-Style Delete**: "Delete for me" and "Delete for everyone" options
+- ✅ **Full-Screen Chat UI**: Split-pane layout with chat list and conversation
+- ✅ **Enhanced Message Schema**: Added `deletedFor` array for per-user deletion
+- ✅ **Real-time Delete Notifications**: PubNub events for "delete for everyone"
+- ✅ **Automatic Message Filtering**: APIs filter out deleted messages based on user
+
 ### What's New?
 
 This document covers **all newly created chat APIs** for the Event Management System. The chat system supports:
@@ -27,10 +35,12 @@ This document covers **all newly created chat APIs** for the Event Management Sy
 - **Event-based Group Chat**: Real-time messaging within events
 - **Direct Messaging (1:1)**: Private conversations between users
 - **File Sharing**: Images, documents, PDFs, voice notes
+- **Delete Messages**: WhatsApp-style "Delete for me" and "Delete for everyone"
 - **Real-time Delivery**: PubNub integration for instant messaging
 - **Message History**: Persistent storage in MongoDB
 - **Unread Counts**: Track unread messages per event and per user
 - **Online Presence**: See who's online in event chats
+- **WhatsApp-Style UI**: Full-screen split-pane chat interface
 
 ### Technology Stack
 
@@ -746,7 +756,7 @@ await sendMessage({
 #### 5.1 Delete Message
 **DELETE** `/api/chat/messages/:messageId`
 
-**Description:** Soft delete a message. Only sender or admin can delete.
+**Description:** Delete a message with two options - "Delete for me" or "Delete for everyone" (WhatsApp-style).
 
 **Headers:**
 ```
@@ -758,20 +768,65 @@ Authorization: Bearer YOUR_JWT_TOKEN
 |-----------|------|-------------|
 | `messageId` | String | Message ID |
 
-**Response:**
+**Request Body:**
+```json
+{
+  "deleteType": "forMe"
+}
+```
+
+**Delete Types:**
+- `forMe` - Message deleted only for current user (anyone can do this)
+- `forEveryone` - Message deleted for all users (only sender or admin)
+
+**Response (Delete for Me):**
 ```json
 {
   "success": true,
-  "message": "Message deleted successfully",
+  "message": "Message deleted for you",
   "data": {
-    "_id": "6981f35a75abdaecf610b999",
-    "isDeleted": true,
-    "deletedAt": "2024-02-10T10:00:00Z"
+    "deleteType": "forMe",
+    "messageId": "6981f35a75abdaecf610b999"
   }
 }
 ```
 
-**Note:** Message is soft-deleted (marked as deleted, not removed from database).
+**Response (Delete for Everyone):**
+```json
+{
+  "success": true,
+  "message": "Message deleted for everyone",
+  "data": {
+    "deleteType": "forEveryone",
+    "messageId": "6981f35a75abdaecf610b999"
+  }
+}
+```
+
+**PubNub Real-time Event (Delete for Everyone):**
+```json
+{
+  "type": "message_deleted",
+  "messageId": "6981f35a75abdaecf610b999",
+  "deletedBy": "6981f35a75abdaecf610b111",
+  "deleteType": "forEveryone",
+  "timestamp": "2024-02-10T10:00:00Z"
+}
+```
+
+**Error Response (Not Authorized):**
+```json
+{
+  "success": false,
+  "message": "Only the sender or admin can delete for everyone"
+}
+```
+
+**Notes:**
+- **Delete for Me**: Adds user to `deletedFor` array, message hidden only for that user
+- **Delete for Everyone**: Sets `isDeleted: true`, message hidden for all users
+- Real-time notification sent via PubNub for "delete for everyone"
+- Message filtering happens automatically in message history APIs
 
 ---
 
@@ -931,7 +986,9 @@ interface Message {
   }>;
   pubnubTimetoken?: string;       // PubNub timestamp
   isEdited: boolean;              // Message edited flag
-  isDeleted: boolean;             // Soft delete flag
+  isDeleted: boolean;             // Soft delete flag (deleted for everyone)
+  deletedAt?: Date;               // Timestamp when deleted for everyone
+  deletedFor: Array<string>;      // User IDs who deleted message for themselves
   readBy: Array<{                 // Read receipts
     user: string;
     readAt: Date;
@@ -939,6 +996,11 @@ interface Message {
   createdAt: Date;
   updatedAt: Date;
 }
+
+**Delete Fields Explanation:**
+- `isDeleted: true` - Message deleted for everyone (only sender/admin)
+- `deletedFor: [userId1, userId2]` - Message deleted for specific users only
+- Message history APIs automatically filter out messages based on these fields
 ```
 
 ---
@@ -1285,7 +1347,9 @@ const sendMessage = async (text) => {
 - [ ] Record and send voice note
 - [ ] See online users count
 - [ ] See unread count badge
-- [ ] Delete own message
+- [ ] Delete message for me (hide from own view)
+- [ ] Delete message for everyone (remove for all users)
+- [ ] Verify deleted messages don't appear in history
 
 #### Direct Messaging
 - [ ] Get chat users list
@@ -1301,6 +1365,85 @@ const sendMessage = async (text) => {
 - [ ] Handle token expiration
 - [ ] Handle file upload failure
 - [ ] Show deleted messages as "[Message deleted]"
+- [ ] Delete for me doesn't notify other users
+- [ ] Delete for everyone shows real-time notification
+
+---
+
+## UI/UX - WhatsApp Style Interface
+
+### Desktop Chat Page
+
+**Route:** `/chat`
+
+**Layout:**
+```
+┌─────────────────────────────────────────────────────────┐
+│  Navbar                                                  │
+├──────────────────┬──────────────────────────────────────┤
+│  Chat Sidebar    │  Chat Conversation                    │
+│  (400px)         │  (Full Width)                         │
+│                  │                                        │
+│  ┌─────────────┐ │  ┌────────────────────────────────┐  │
+│  │ Messages    │ │  │ Chat Header                    │  │
+│  └─────────────┘ │  ├────────────────────────────────┤  │
+│  ┌─────────────┐ │  │                                 │  │
+│  │ Groups|Users│ │  │  Message Bubbles                │  │
+│  └─────────────┘ │  │  (Scrollable)                   │  │
+│  ┌─────────────┐ │  │                                 │  │
+│  │ Search      │ │  │                                 │  │
+│  └─────────────┘ │  ├────────────────────────────────┤  │
+│  ┌─────────────┐ │  │ Input + Send                    │  │
+│  │ Chat List   │ │  └────────────────────────────────┘  │
+│  │ - Event 1 ●│ │                                        │
+│  │ - User 1  ●│ │                                        │
+│  │ - Event 2  │ │                                        │
+│  │             │ │                                        │
+│  └─────────────┘ │                                        │
+└──────────────────┴──────────────────────────────────────┘
+```
+
+### Features
+
+**Left Sidebar (Chat List):**
+- Header: "Messages"
+- Tabs: Groups (📅) and Users (👤) with unread badges
+- Search bar for filtering chats
+- Chat list with:
+  - Avatar (emoji for events, initials for users)
+  - Name and status/role
+  - Unread count badge (blue)
+  - Selected state highlighting (cyan background)
+  - Hover effects
+
+**Right Panel (Conversation):**
+- Shows placeholder when no chat selected
+- Full chat interface when user/group clicked:
+  - Chat header with name and online count
+  - Scrollable message area
+  - Message input with file upload and voice recording
+  - Three-dot menu on messages for delete options
+
+**Message Features:**
+- Message bubbles (left for others, right for own)
+- Timestamp and read receipts
+- Image preview and download
+- Audio player for voice notes
+- File download buttons
+- Delete menu (⋮):
+  - 🗑️ Delete for me (gray)
+  - 🗑️ Delete for everyone (red, own messages only)
+
+**Responsive Design:**
+- Desktop: Split pane (400px sidebar + full width chat)
+- Tablet: 320px sidebar + remaining space
+- Mobile: Stacked view with back button
+
+### Access
+
+**Navigation:** Sidebar Menu → 💬 Messages
+
+**Direct URL:** `https://your-domain.com/chat`
 
 ---
 
