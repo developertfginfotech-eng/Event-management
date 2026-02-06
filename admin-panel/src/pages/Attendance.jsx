@@ -16,7 +16,7 @@ function Attendance() {
   const [events, setEvents] = useState([])
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showModal, setShowModal] = useState(false)
+  const [showForm, setShowForm] = useState(false)
   const [editingRecord, setEditingRecord] = useState(null)
   const [filters, setFilters] = useState({
     event: '',
@@ -102,7 +102,7 @@ function Attendance() {
       status: 'Present',
       notes: ''
     })
-    setShowModal(true)
+    setShowForm(true)
   }
 
   const handleEdit = (record) => {
@@ -116,7 +116,7 @@ function Attendance() {
       status: record.status || 'Present',
       notes: record.notes || ''
     })
-    setShowModal(true)
+    setShowForm(true)
   }
 
   const handleDelete = async (id) => {
@@ -168,7 +168,7 @@ function Attendance() {
         alert('Attendance record created successfully')
       }
 
-      setShowModal(false)
+      setShowForm(false)
       loadAttendance()
     } catch (error) {
       console.error('Error saving attendance:', error)
@@ -383,15 +383,14 @@ function Attendance() {
         </div>
       )}
 
-      {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{editingRecord ? 'Edit Attendance' : 'Add Attendance'}</h2>
-              <button onClick={() => setShowModal(false)} className="close-btn">&times;</button>
-            </div>
+      {showForm && (
+        <div className="form-section" style={{ marginTop: '20px', padding: '20px', background: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2 style={{ margin: 0 }}>{editingRecord ? 'Edit Attendance' : 'Add Attendance'}</h2>
+            <button onClick={() => setShowForm(false)} className="close-btn" style={{ fontSize: '24px', background: 'transparent', border: 'none', cursor: 'pointer' }}>&times;</button>
+          </div>
 
-            <form onSubmit={handleSubmit} className="expense-form">
+          <form onSubmit={handleSubmit} className="expense-form">
               <div className="form-row">
                 <div className="form-group">
                   <label>User *</label>
@@ -490,12 +489,11 @@ function Attendance() {
                 <button type="submit" className="btn-primary">
                   {editingRecord ? 'Update' : 'Create'}
                 </button>
-                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">
+                <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">
                   Cancel
                 </button>
               </div>
             </form>
-          </div>
         </div>
       )}
     </div>

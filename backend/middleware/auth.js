@@ -55,6 +55,10 @@ exports.authorize = (...roles) => {
 // Check specific permissions
 exports.checkPermission = (permission) => {
   return (req, res, next) => {
+    if (req.user.role === 'Super Admin' || req.user.role === 'Admin') {
+      return next();
+    }
+
     if (!req.user.permissions[permission]) {
       return res.status(403).json({
         success: false,

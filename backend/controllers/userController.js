@@ -17,7 +17,7 @@ exports.addUser = async (req, res, next) => {
     }
 
     // Create user
-    const user = await User.create({
+    const userData = {
       name,
       email,
       phone,
@@ -25,7 +25,19 @@ exports.addUser = async (req, res, next) => {
       role,
       designation,
       department,
-    });
+    };
+
+    if (role === 'Super Admin' || role === 'Admin') {
+      userData.permissions = {
+        canManageEvents: true,
+        canManageUsers: true,
+        canViewAllLeads: true,
+        canApproveExpenses: true,
+        canViewReports: true,
+      };
+    }
+
+    const user = await User.create(userData);
 
     // Remove password from response
     user.password = undefined;
@@ -119,7 +131,18 @@ exports.updateUser = async (req, res, next) => {
     if (email) user.email = email;
     if (phone) user.phone = phone;
     if (password) user.password = password; // Will be hashed by pre-save middleware
-    if (role) user.role = role;
+    if (role) {
+      user.role = role;
+      if (role === 'Super Admin' || role === 'Admin') {
+        user.permissions = {
+          canManageEvents: true,
+          canManageUsers: true,
+          canViewAllLeads: true,
+          canApproveExpenses: true,
+          canViewReports: true,
+        };
+      }
+    }
     if (designation !== undefined) user.designation = designation;
     if (department !== undefined) user.department = department;
     if (isActive !== undefined) user.isActive = isActive;

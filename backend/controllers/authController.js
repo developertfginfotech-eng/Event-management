@@ -55,6 +55,13 @@ exports.login = async (req, res, next) => {
       });
     }
 
+    if (user.role === 'Field User') {
+      return res.status(403).json({
+        success: false,
+        message: 'Field Users cannot access admin panel. Please use the mobile app.',
+      });
+    }
+
     const isMatch = await user.matchPassword(password);
 
     if (!isMatch) {

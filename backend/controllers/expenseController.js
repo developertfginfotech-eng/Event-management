@@ -13,8 +13,9 @@ exports.getExpenses = async (req, res, next) => {
     if (category) query.category = category;
     if (status) query.status = status;
 
-    // If not admin, show only own expenses
-    if (!req.user.permissions.canViewReports) {
+    // Only Super Admin and Admin can see all expenses
+    // Manager and Field User can only see their own expenses
+    if (req.user.role === 'Manager' || req.user.role === 'Field User') {
       query.user = req.user._id;
     } else if (user) {
       query.user = user;

@@ -7,6 +7,9 @@ const API_URL = import.meta.env.VITE_API_URL
 
 function Expenses() {
   const navigate = useNavigate()
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
+  const canApprove = currentUser.role === 'Super Admin' || currentUser.role === 'Admin' || currentUser.permissions?.canApproveExpenses
+
   const [expenses, setExpenses] = useState([])
   const [events, setEvents] = useState([])
   const [users, setUsers] = useState([])
@@ -299,20 +302,22 @@ function Expenses() {
                       </span>
                     </td>
                     <td className="actions">
-                      <button
-                        onClick={() => {
-                          setSelectedExpense(expense)
-                          setReviewData({
-                            status: 'Approved',
-                            adminComments: expense.adminComments || ''
-                          })
-                          setShowReviewModal(true)
-                        }}
-                        className="btn-icon"
-                        title="Review"
-                      >
-                        ✓
-                      </button>
+                      {canApprove && (
+                        <button
+                          onClick={() => {
+                            setSelectedExpense(expense)
+                            setReviewData({
+                              status: 'Approved',
+                              adminComments: expense.adminComments || ''
+                            })
+                            setShowReviewModal(true)
+                          }}
+                          className="btn-icon"
+                          title="Review"
+                        >
+                          ✓
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDelete(expense._id)}
                         className="btn-icon btn-danger"
