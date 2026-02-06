@@ -14,7 +14,18 @@ const expenseSchema = new mongoose.Schema(
     },
     subCategory: {
       type: String,
-      enum: ['Cab', 'Train', 'Flight', 'Bus', 'Other'],
+      enum: [
+        // Travel subcategories
+        'Cab', 'Train', 'Flight', 'Bus', 'Auto',
+        // Food subcategories
+        'Breakfast', 'Lunch', 'Dinner', 'Snacks', 'Team Meal', 'Client Meal',
+        // Stay subcategories
+        'Hotel', 'Guest House', 'Airbnb', 'Hostel',
+        // Misc subcategories
+        'Printing', 'Stationery', 'Equipment', 'Software', 'Internet', 'Phone',
+        // Common
+        'Other'
+      ],
     },
     description: {
       type: String,

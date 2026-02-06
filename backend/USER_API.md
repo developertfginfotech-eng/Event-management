@@ -1254,7 +1254,21 @@ GET https://event-backend-lqu0.onrender.com/api/expenses?event=EVENT_ID&category
   "amount": 5000,
   "date": "2024-02-10",
   "receipt": "/uploads/receipts/receipt-1707132000000.jpg",
-  "paymentMethod": "Credit Card"
+  "paymentMethod": "Card",
+  "billNumber": "INV-12345"
+}
+```
+
+**Example - Food Expense:**
+```json
+{
+  "event": "EVENT_ID",
+  "category": "Food",
+  "subCategory": "Team Meal",
+  "description": "Team lunch at event venue",
+  "amount": 1500,
+  "date": "2024-02-10",
+  "paymentMethod": "Cash"
 }
 ```
 
@@ -1267,12 +1281,20 @@ GET https://event-backend-lqu0.onrender.com/api/expenses?event=EVENT_ID&category
 | `amount` | Number | Amount in rupees |
 | `date` | String | Date (YYYY-MM-DD) |
 
+**Category & Sub-Category Options:**
+| Category | Sub-Categories |
+|----------|----------------|
+| `Travel` | `Cab`, `Train`, `Flight`, `Bus`, `Auto`, `Other` |
+| `Food` | `Breakfast`, `Lunch`, `Dinner`, `Snacks`, `Team Meal`, `Client Meal`, `Other` |
+| `Stay` | `Hotel`, `Guest House`, `Airbnb`, `Hostel`, `Other` |
+| `Misc` | `Printing`, `Stationery`, `Equipment`, `Software`, `Internet`, `Phone`, `Other` |
+
 **Optional Fields:**
 | Field | Type | Description |
 |-------|------|-------------|
-| `subCategory` | String | Sub-category name |
+| `subCategory` | String | Sub-category name (see table above) |
 | `receipt` | String | File path from file upload API |
-| `paymentMethod` | String | Payment method used |
+| `paymentMethod` | String | `Cash`, `Card`, `UPI`, `Bank Transfer`, `Other` |
 
 **Response:**
 ```json
