@@ -389,6 +389,50 @@
   color: #6b7280;
 }
 
+/* Business Card Image */
+.business-card-preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 2px dashed #e5e7eb;
+}
+
+.business-card-image {
+  max-width: 100%;
+  max-height: 500px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.business-card-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  cursor: zoom-in;
+}
+
+.image-error {
+  text-align: center;
+  padding: 40px;
+  color: #6b7280;
+}
+
+.image-error p {
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: #ef4444;
+}
+
+.image-error small {
+  font-size: 12px;
+  color: #9ca3af;
+  font-family: monospace;
+}
+
 /* No Data */
 .no-data {
   text-align: center;

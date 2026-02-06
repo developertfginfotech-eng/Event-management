@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { getLeadById, deleteLead } from '../services/api'
 import './LeadDetails.css'
 
+const API_URL = import.meta.env.VITE_API_URL
+
 function LeadDetails() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -180,6 +182,28 @@ function LeadDetails() {
           </div>
         </div>
       </div>
+
+      {/* Business Card Image */}
+      {lead.businessCardImage && (
+        <div className="details-card full-width">
+          <h2>📇 Business Card</h2>
+          <div className="business-card-preview">
+            <img
+              src={`${API_URL}${lead.businessCardImage}`}
+              alt="Business Card"
+              className="business-card-image"
+              onError={(e) => {
+                e.target.style.display = 'none'
+                e.target.nextSibling.style.display = 'block'
+              }}
+            />
+            <div className="image-error" style={{ display: 'none' }}>
+              <p>⚠️ Business card image not available</p>
+              <small>{lead.businessCardImage}</small>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Event Details */}
       {lead.source && (
