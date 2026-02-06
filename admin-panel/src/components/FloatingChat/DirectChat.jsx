@@ -17,7 +17,7 @@ function DirectChat({ recipientId, recipientName, isOpen, onClose }) {
 
   // Helper to get user from localStorage with normalized ID
   const getCurrentUser = () => {
-    const user = getCurrentUser();
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
     // Backend returns 'id', but some parts expect '_id'
     if (user.id && !user._id) {
       user._id = user.id;
