@@ -9,6 +9,14 @@ function ExpenseForm() {
   const isEditMode = !!id
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
 
+  // Category to Subcategory mapping
+  const categorySubcategories = {
+    Travel: ['Cab', 'Train', 'Flight', 'Bus', 'Auto', 'Other'],
+    Food: ['Breakfast', 'Lunch', 'Dinner', 'Snacks', 'Team Meal', 'Client Meal', 'Other'],
+    Stay: ['Hotel', 'Guest House', 'Airbnb', 'Hostel', 'Other'],
+    Misc: ['Printing', 'Stationery', 'Equipment', 'Software', 'Internet', 'Phone', 'Other'],
+  }
+
   const [events, setEvents] = useState([])
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(false)
@@ -74,10 +82,21 @@ function ExpenseForm() {
   }
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    })
+    const { name, value } = e.target
+
+    // Reset subcategory when category changes
+    if (name === 'category') {
+      setFormData({
+        ...formData,
+        category: value,
+        subCategory: '', // Reset subcategory
+      })
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      })
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -184,11 +203,11 @@ function ExpenseForm() {
                 onChange={handleChange}
               >
                 <option value="">Select Sub-Category</option>
-                <option value="Cab">Cab</option>
-                <option value="Train">Train</option>
-                <option value="Flight">Flight</option>
-                <option value="Bus">Bus</option>
-                <option value="Other">Other</option>
+                {categorySubcategories[formData.category]?.map(subCat => (
+                  <option key={subCat} value={subCat}>
+                    {subCat}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
