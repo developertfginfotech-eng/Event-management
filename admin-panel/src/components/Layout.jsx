@@ -1,4 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
+import FloatingChat from './FloatingChat/FloatingChat'
 import './Layout.css'
 
 function Layout({ children, setIsAuthenticated }) {
@@ -113,6 +114,9 @@ function Layout({ children, setIsAuthenticated }) {
           {children}
         </main>
       </div>
+
+      {/* Floating Chat Button */}
+      <FloatingChat />
     </div>
   )
 }

@@ -96,6 +96,11 @@ export const checkIn = (data) => api.post('/attendance/checkin', data)
 export const checkOut = (id, data) => api.put(`/attendance/${id}/checkout`, data)
 export const getAttendanceSummary = (userId) => api.get(`/attendance/summary/${userId || ''}`)
 
+// Admin Attendance
+export const createAttendanceRecord = (data) => api.post('/admin/attendance', data)
+export const updateAttendanceRecord = (id, data) => api.put(`/admin/attendance/${id}`, data)
+export const deleteAttendanceRecord = (id) => api.delete(`/admin/attendance/${id}`)
+
 // Tasks
 export const getTasks = (params) => api.get('/tasks', { params })
 export const getTask = (id) => api.get(`/tasks/${id}`)
@@ -128,5 +133,33 @@ export const submitDailyReport = (id, data) => api.put(`/daily-reports/${id}/sub
 export const reviewDailyReport = (id, data) => api.put(`/daily-reports/${id}/review`, data)
 export const deleteDailyReport = (id) => api.delete(`/daily-reports/${id}`)
 export const getDailyReportSummary = (userId) => api.get(`/daily-reports/summary/${userId || ''}`)
+
+// Chat - Event-based
+export const getChatToken = () => api.get('/chat/auth-token')
+export const sendChatMessage = (eventId, data) => api.post(`/chat/events/${eventId}/messages`, data)
+export const getEventMessages = (eventId, params) => api.get(`/chat/events/${eventId}/messages`, { params })
+export const markMessagesAsRead = (eventId, messageIds) => api.post(`/chat/events/${eventId}/messages/mark-read`, { messageIds })
+export const getUnreadCount = () => api.get('/chat/unread-count')
+export const getEventUnreadCount = (eventId) => api.get(`/chat/events/${eventId}/unread-count`)
+export const deleteMessage = (messageId) => api.delete(`/chat/messages/${messageId}`)
+export const getEventParticipants = (eventId) => api.get(`/chat/events/${eventId}/participants`)
+
+// Chat - Direct Messaging
+export const getChatUsers = () => api.get('/chat/users')
+export const getDMToken = () => api.get('/chat/dm/auth-token')
+export const sendDirectMessage = (recipientId, data) => api.post(`/chat/dm/${recipientId}/messages`, data)
+export const getDirectMessages = (otherUserId, params) => api.get(`/chat/dm/${otherUserId}/messages`, { params })
+export const getDMUnreadCount = () => api.get('/chat/dm/unread-count')
+
+// Chat - File Upload
+export const uploadChatFile = (file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return api.post('/chat/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
 
 export default api

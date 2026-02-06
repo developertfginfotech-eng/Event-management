@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getEvent, getUsers, assignUsersToEvent } from '../services/api'
+import EventChat from '../components/EventChat/EventChat'
 import './EventDetails.css'
 
 function EventDetails() {
@@ -13,6 +14,7 @@ function EventDetails() {
   const [assignLoading, setAssignLoading] = useState(false)
   const [error, setError] = useState('')
   const [showAssignModal, setShowAssignModal] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -83,6 +85,9 @@ function EventDetails() {
           <h1>{event.name}</h1>
         </div>
         <div className="header-actions">
+          <button onClick={() => setChatOpen(!chatOpen)} className="btn-chat-toggle">
+            {chatOpen ? '✕ Close Chat' : '💬 Open Chat'}
+          </button>
           <button onClick={() => setShowAssignModal(true)} className="btn-assign">
             Assign Users
           </button>
@@ -90,7 +95,9 @@ function EventDetails() {
         </div>
       </div>
 
-      <div className="details-grid">
+      <div className="event-details-container">
+        <div className="details-section">
+          <div className="details-grid">
         <div className="detail-card">
           <h3>Event Information</h3>
           <div className="detail-item">
@@ -189,6 +196,19 @@ function EventDetails() {
             </div>
           )}
         </div>
+      </div>
+        </div>
+
+        {chatOpen && (
+          <div className="chat-section">
+            <EventChat
+              eventId={id}
+              eventName={event.name}
+              isOpen={chatOpen}
+              onClose={() => setChatOpen(false)}
+            />
+          </div>
+        )}
       </div>
 
       {showAssignModal && (

@@ -10,6 +10,7 @@ function EventForm() {
 
   const [formData, setFormData] = useState({
     name: '',
+    organizerName: '',
     description: '',
     startDate: '',
     endDate: '',
@@ -142,6 +143,18 @@ function EventForm() {
               <option value="Other">Other</option>
             </select>
           </div>
+        </div>
+
+        <div className="form-group">
+          <label>Organizer Name *</label>
+          <input
+            type="text"
+            name="organizerName"
+            value={formData.organizerName}
+            onChange={handleChange}
+            required
+            placeholder="Enter organizer name"
+          />
         </div>
 
         <div className="form-group">

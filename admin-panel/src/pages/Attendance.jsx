@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react'
-import { getAttendance, getEvents, getUsers } from '../services/api'
+import {
+  getAttendance,
+  getEvents,
+  getUsers,
+  createAttendanceRecord,
+  updateAttendanceRecord,
+  deleteAttendanceRecord
+} from '../services/api'
 import './Expenses.css'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -9,12 +16,23 @@ function Attendance() {
   const [events, setEvents] = useState([])
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [showModal, setShowModal] = useState(false)
+  const [editingRecord, setEditingRecord] = useState(null)
   const [filters, setFilters] = useState({
     event: '',
     user: '',
     status: '',
     startDate: '',
     endDate: ''
+  })
+  const [formData, setFormData] = useState({
+    user: '',
+    event: '',
+    date: '',
+    checkInTime: '',
+    checkOutTime: '',
+    status: 'Present',
+    notes: ''
   })
 
   useEffect(() => {
@@ -73,6 +91,91 @@ function Attendance() {
     setTimeout(() => loadAttendance(), 0)
   }
 
+  const handleAddNew = () => {
+    setEditingRecord(null)
+    setFormData({
+      user: '',
+      event: '',
+      date: new Date().toISOString().split('T')[0],
+      checkInTime: '',
+      checkOutTime: '',
+      status: 'Present',
+      notes: ''
+    })
+    setShowModal(true)
+  }
+
+  const handleEdit = (record) => {
+    setEditingRecord(record)
+    setFormData({
+      user: record.user?._id || '',
+      event: record.event?._id || '',
+      date: record.date ? new Date(record.date).toISOString().split('T')[0] : '',
+      checkInTime: record.checkIn?.time ? new Date(record.checkIn.time).toISOString().slice(0, 16) : '',
+      checkOutTime: record.checkOut?.time ? new Date(record.checkOut.time).toISOString().slice(0, 16) : '',
+      status: record.status || 'Present',
+      notes: record.notes || ''
+    })
+    setShowModal(true)
+  }
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this attendance record?')) return
+
+    try {
+      await deleteAttendanceRecord(id)
+      alert('Attendance record deleted successfully')
+      loadAttendance()
+    } catch (error) {
+      console.error('Error deleting attendance:', error)
+      alert(error.response?.data?.message || 'Error deleting attendance record')
+    }
+  }
+
+  const handleFormChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    try {
+      const data = {
+        user: formData.user,
+        event: formData.event,
+        date: new Date(formData.date).toISOString(),
+        status: formData.status,
+        notes: formData.notes
+      }
+
+      if (formData.checkInTime) {
+        data.checkIn = {
+          time: new Date(formData.checkInTime).toISOString()
+        }
+      }
+
+      if (formData.checkOutTime) {
+        data.checkOut = {
+          time: new Date(formData.checkOutTime).toISOString()
+        }
+      }
+
+      if (editingRecord) {
+        await updateAttendanceRecord(editingRecord._id, data)
+        alert('Attendance record updated successfully')
+      } else {
+        await createAttendanceRecord(data)
+        alert('Attendance record created successfully')
+      }
+
+      setShowModal(false)
+      loadAttendance()
+    } catch (error) {
+      console.error('Error saving attendance:', error)
+      alert(error.response?.data?.message || 'Error saving attendance record')
+    }
+  }
+
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -113,6 +216,9 @@ function Attendance() {
     <div className="expenses-page">
       <div className="page-header">
         <h1>Attendance Management</h1>
+        <button onClick={handleAddNew} className="btn-primary">
+          + Add Attendance
+        </button>
       </div>
 
       <div className="filters-section">
@@ -193,18 +299,28 @@ function Attendance() {
                 <th>Work Hours</th>
                 <th>Selfie</th>
                 <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {attendance.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="no-data">No attendance records found</td>
+                  <td colSpan="9" className="no-data">No attendance records found</td>
                 </tr>
               ) : (
                 attendance.map(record => (
                   <tr key={record._id}>
                     <td>{formatDate(record.date || record.checkIn?.time)}</td>
-                    <td>{record.user?.name || '-'}</td>
+                    <td>
+                      {record.user?.name || '-'}
+                      {record.notes && (
+                        <div style={{ marginTop: '4px' }}>
+                          <span style={{ fontSize: '12px', color: '#718096' }} title={record.notes}>
+                            📝 Note: {record.notes.length > 30 ? record.notes.substring(0, 30) + '...' : record.notes}
+                          </span>
+                        </div>
+                      )}
+                    </td>
                     <td>{record.event?.name || '-'}</td>
                     <td>
                       {record.checkIn?.time ? (
@@ -239,11 +355,147 @@ function Attendance() {
                         {record.status || 'Pending'}
                       </span>
                     </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => handleEdit(record)}
+                          className="btn-icon"
+                          title="Edit"
+                          style={{ padding: '4px 8px', fontSize: '12px' }}
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => handleDelete(record._id)}
+                          className="btn-icon"
+                          title="Delete"
+                          style={{ padding: '4px 8px', fontSize: '12px' }}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{editingRecord ? 'Edit Attendance' : 'Add Attendance'}</h2>
+              <button onClick={() => setShowModal(false)} className="close-btn">&times;</button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="expense-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>User *</label>
+                  <select
+                    name="user"
+                    value={formData.user}
+                    onChange={handleFormChange}
+                    required
+                  >
+                    <option value="">Select User</option>
+                    {users.map(user => (
+                      <option key={user._id} value={user._id}>{user.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Event *</label>
+                  <select
+                    name="event"
+                    value={formData.event}
+                    onChange={handleFormChange}
+                    required
+                  >
+                    <option value="">Select Event</option>
+                    {events.map(event => (
+                      <option key={event._id} value={event._id}>{event.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Date *</label>
+                  <input
+                    type="date"
+                    name="date"
+                    value={formData.date}
+                    onChange={handleFormChange}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Status *</label>
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleFormChange}
+                    required
+                  >
+                    <option value="Present">Present</option>
+                    <option value="Absent">Absent</option>
+                    <option value="Half Day">Half Day</option>
+                    <option value="Leave">Leave</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Check In Time</label>
+                  <input
+                    type="datetime-local"
+                    name="checkInTime"
+                    value={formData.checkInTime}
+                    onChange={handleFormChange}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Check Out Time</label>
+                  <input
+                    type="datetime-local"
+                    name="checkOutTime"
+                    value={formData.checkOutTime}
+                    onChange={handleFormChange}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Notes</label>
+                <textarea
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleFormChange}
+                  rows="3"
+                  placeholder="Add notes about this attendance record..."
+                  style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e0' }}
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="submit" className="btn-primary">
+                  {editingRecord ? 'Update' : 'Create'}
+                </button>
+                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

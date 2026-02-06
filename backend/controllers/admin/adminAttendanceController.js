@@ -2,6 +2,76 @@ const Attendance = require('../../models/Attendance');
 const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
 
+// @desc    Create attendance record
+// @route   POST /api/admin/attendance
+// @access  Private (admin)
+exports.createAttendance = async (req, res, next) => {
+  try {
+    const attendance = await Attendance.create(req.body);
+    await attendance.populate('user event');
+
+    res.status(201).json({
+      success: true,
+      data: attendance,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Update attendance record
+// @route   PUT /api/admin/attendance/:id
+// @access  Private (admin)
+exports.updateAttendance = async (req, res, next) => {
+  try {
+    let attendance = await Attendance.findById(req.params.id);
+
+    if (!attendance) {
+      return res.status(404).json({
+        success: false,
+        message: 'Attendance record not found',
+      });
+    }
+
+    attendance = await Attendance.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    }).populate('user event');
+
+    res.status(200).json({
+      success: true,
+      data: attendance,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Delete attendance record
+// @route   DELETE /api/admin/attendance/:id
+// @access  Private (admin)
+exports.deleteAttendance = async (req, res, next) => {
+  try {
+    const attendance = await Attendance.findById(req.params.id);
+
+    if (!attendance) {
+      return res.status(404).json({
+        success: false,
+        message: 'Attendance record not found',
+      });
+    }
+
+    await attendance.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      message: 'Attendance record deleted successfully',
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // @desc    Export attendance to Excel
 // @route   GET /api/admin/attendance/export/excel
 // @access  Private (canViewReports)
