@@ -62,6 +62,8 @@
   border-radius: 8px;
   font-size: 14px;
   transition: all 0.2s;
+  color: var(--dark);
+  background-color: white;
 }
 
 .form-group input:focus,

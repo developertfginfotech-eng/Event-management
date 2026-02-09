@@ -106,6 +106,7 @@ input, textarea, select {
   font-family: 'Inter', sans-serif;
   transition: all 0.2s ease;
   background-color: white;
+  color: var(--dark);
 }
 
 input:focus, textarea:focus, select:focus {
