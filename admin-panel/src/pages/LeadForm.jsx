@@ -65,6 +65,40 @@ function LeadForm() {
     }
   }, [id])
 
+  // Update available states when country changes
+  useEffect(() => {
+    if (formData.location.country) {
+      const states = getStatesForCountry(formData.location.country)
+      setAvailableStates(states)
+      // Reset state and city if country changed
+      if (states.length > 0 && !states.includes(formData.location.state)) {
+        setFormData(prev => ({
+          ...prev,
+          location: { ...prev.location, state: '', city: '' }
+        }))
+      }
+    } else {
+      setAvailableStates([])
+    }
+  }, [formData.location.country])
+
+  // Update available cities when state changes
+  useEffect(() => {
+    if (formData.location.state) {
+      const cities = getCitiesForState(formData.location.state)
+      setAvailableCities(cities)
+      // Reset city if state changed
+      if (cities.length > 0 && !cities.includes(formData.location.city)) {
+        setFormData(prev => ({
+          ...prev,
+          location: { ...prev.location, city: '' }
+        }))
+      }
+    } else {
+      setAvailableCities([])
+    }
+  }, [formData.location.state])
+
   const loadEvents = async () => {
     try {
       const response = await getEvents()
@@ -120,6 +154,13 @@ function LeadForm() {
     setFormData(prev => ({
       ...prev,
       [parent]: { ...prev[parent], [child]: value }
+    }))
+  }
+
+  const handleLocationChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      location: { ...prev.location, [field]: value }
     }))
   }
 
@@ -386,35 +427,35 @@ function LeadForm() {
           <div className="form-row">
             <div className="form-group">
               <label>Country</label>
-              <input
-                type="text"
-                name="location.country"
+              <Autocomplete
                 value={formData.location.country}
-                onChange={handleNestedChange}
-                placeholder="India"
+                onChange={(value) => handleLocationChange('country', value)}
+                options={countries}
+                placeholder="Start typing country name..."
+                name="country"
               />
             </div>
 
             <div className="form-group">
               <label>State</label>
-              <input
-                type="text"
-                name="location.state"
+              <Autocomplete
                 value={formData.location.state}
-                onChange={handleNestedChange}
-                placeholder="Maharashtra"
+                onChange={(value) => handleLocationChange('state', value)}
+                options={availableStates}
+                placeholder={formData.location.country ? "Start typing state name..." : "Select country first"}
+                name="state"
               />
             </div>
           </div>
 
           <div className="form-group">
             <label>City</label>
-            <input
-              type="text"
-              name="location.city"
+            <Autocomplete
               value={formData.location.city}
-              onChange={handleNestedChange}
-              placeholder="Mumbai"
+              onChange={(value) => handleLocationChange('city', value)}
+              options={availableCities}
+              placeholder={formData.location.state ? "Start typing city name..." : "Select state first"}
+              name="city"
             />
           </div>
 
