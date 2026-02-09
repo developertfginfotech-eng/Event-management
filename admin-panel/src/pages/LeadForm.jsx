@@ -8,6 +8,8 @@ import {
   uploadFiles,
   addAttachmentsToLead
 } from '../services/api'
+import Autocomplete from '../components/Autocomplete'
+import { countries, getStatesForCountry, getCitiesForState } from '../data/locationData'
 import './LeadForm.css'
 
 function LeadForm() {
@@ -53,6 +55,8 @@ function LeadForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [events, setEvents] = useState([])
+  const [availableStates, setAvailableStates] = useState([])
+  const [availableCities, setAvailableCities] = useState([])
 
   useEffect(() => {
     loadEvents()
