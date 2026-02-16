@@ -255,6 +255,8 @@ function EventForm() {
               <option value="Upcoming">Upcoming</option>
               <option value="Live">Live</option>
               <option value="Completed">Completed</option>
+              <option value="Postponed">Postponed</option>
+              <option value="Cancelled">Cancelled</option>
             </select>
           </div>
         </div>

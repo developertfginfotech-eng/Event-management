@@ -104,6 +104,16 @@
   color: var(--gray);
 }
 
+.status-badge.postponed {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge.cancelled {
+  background-color: #fee2e2;
+  color: var(--danger);
+}
+
 .action-buttons {
   display: flex;
   gap: 8px;

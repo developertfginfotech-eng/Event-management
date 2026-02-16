@@ -246,6 +246,7 @@ Authorization: Bearer YOUR_TOKEN_HERE
         {
           "_id": "EVENT_ID",
           "name": "Tech Expo 2024",
+          "organizerName": "Tech Events India",
           "startDate": "2024-02-10T00:00:00Z",
           "endDate": "2024-02-12T00:00:00Z",
           "status": "Upcoming",
@@ -294,7 +295,7 @@ Authorization: Bearer YOUR_TOKEN_HERE
 **Query Parameters:**
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `status` | String | `Upcoming`, `Live`, `Completed` |
+| `status` | String | `Upcoming`, `Live`, `Completed`, `Postponed`, `Cancelled` |
 | `search` | String | Search by name/location |
 
 **Examples:**
@@ -313,6 +314,7 @@ GET https://event-backend-lqu0.onrender.com/api/events?search=Tech
     {
       "_id": "EVENT_ID",
       "name": "Tech Expo 2024",
+      "organizerName": "Tech Events India",
       "description": "Annual technology exhibition",
       "startDate": "2024-02-10T00:00:00Z",
       "endDate": "2024-02-12T00:00:00Z",
@@ -354,6 +356,7 @@ GET https://event-backend-lqu0.onrender.com/api/events/6981f35a75abdaecf610b757
   "data": {
     "_id": "EVENT_ID",
     "name": "Tech Expo 2024",
+    "organizerName": "Tech Events India",
     "description": "Annual technology exhibition",
     "startDate": "2024-02-10T00:00:00Z",
     "endDate": "2024-02-12T00:00:00Z",
