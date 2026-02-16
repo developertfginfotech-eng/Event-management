@@ -8,6 +8,12 @@ const eventSchema = new mongoose.Schema(
       trim: true,
       maxlength: [100, 'Event name cannot be more than 100 characters'],
     },
+    organizerName: {
+      type: String,
+      required: [true, 'Please add organizer name'],
+      trim: true,
+      maxlength: [100, 'Organizer name cannot be more than 100 characters'],
+    },
     description: {
       type: String,
       required: [true, 'Please add event description'],
@@ -70,7 +76,7 @@ const eventSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Upcoming', 'Live', 'Completed', 'Cancelled'],
+      enum: ['Upcoming', 'Live', 'Completed', 'Postponed', 'Cancelled'],
       default: 'Upcoming',
     },
     budget: {
