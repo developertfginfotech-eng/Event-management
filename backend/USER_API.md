@@ -1081,7 +1081,7 @@ GET https://event-backend-lqu0.onrender.com/api/leads/6981f35a75abdaecf610b757
 **Request Body (Form Data):**
 | Field | Type | Description |
 |-------|------|-------------|
-| `file` | File | Business card image (JPG or PNG) |
+| `file` | File | Business card image (JPG, PNG, or WebP) |
 | `sourceId` | String | Event ID (MongoDB ObjectId) |
 
 **Request Example (JavaScript):**
@@ -1154,7 +1154,7 @@ fetch('https://event-backend-lqu0.onrender.com/api/leads/upload-and-scan-busines
 ```json
 {
   "success": false,
-  "message": "Invalid image format. Please upload a JPG or PNG image of the business card and try again."
+  "message": "Invalid image format. Please upload a JPG, PNG, or WebP image of the business card and try again."
 }
 ```
 
@@ -1227,7 +1227,7 @@ fetch('https://event-backend-lqu0.onrender.com/api/leads/upload-and-scan-busines
 - ✅ Avoid shadows and reflections
 - ✅ Use high resolution (at least 1080p)
 - ✅ Keep card flat and straight
-- ✅ Supported formats: JPG, PNG
+- ✅ Supported formats: JPG, PNG, WebP
 - ✅ Maximum file size: 5MB
 
 ---

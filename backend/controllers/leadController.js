@@ -496,14 +496,24 @@ exports.uploadAndScanBusinessCard = async (req, res) => {
 
     const uploadedFile = req.file;
 
-    // Validate file type
-    const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    // Validate file type (now including WebP)
+    const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!allowedMimeTypes.includes(uploadedFile.mimetype)) {
       // Delete uploaded file
-      fs.unlinkSync(uploadedFile.path);
+      if (fs.existsSync(uploadedFile.path)) {
+        fs.unlinkSync(uploadedFile.path);
+      }
       return res.status(400).json({
         success: false,
-        message: 'Invalid image format. Please upload a JPG or PNG image of the business card and try again.',
+        message: 'Invalid image format. Please upload a JPG, PNG, or WebP image of the business card and try again.',
+      });
+    }
+
+    // Check if file was actually saved
+    if (!fs.existsSync(uploadedFile.path)) {
+      return res.status(500).json({
+        success: false,
+        message: 'File upload failed. Please try again.',
       });
     }
 
