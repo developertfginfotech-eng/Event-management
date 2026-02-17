@@ -5,6 +5,7 @@ const csvtojson = require('csvtojson');
 const { createWorker } = require('tesseract.js');
 const ExcelJS = require('exceljs');
 const { Parser } = require('json2csv');
+const { sendEmailToLead } = require('../utils/emailService');
 
 // @desc    Get all leads
 // @route   GET /api/leads
@@ -1002,6 +1003,94 @@ exports.exportToCSV = async (req, res, next) => {
     );
 
     res.status(200).send(csv);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// @desc    Send email to lead
+// @route   POST /api/leads/:id/send-email
+// @access  Private
+exports.sendEmail = async (req, res, next) => {
+  try {
+    const { subject, message, attachments } = req.body;
+
+    if (!subject || !message) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide subject and message',
+      });
+    }
+
+    const lead = await Lead.findById(req.params.id);
+
+    if (!lead) {
+      return res.status(404).json({
+        success: false,
+        message: 'Lead not found',
+      });
+    }
+
+    if (!lead.email) {
+      return res.status(400).json({
+        success: false,
+        message: 'This lead does not have an email address',
+      });
+    }
+
+    if (
+      !req.user.permissions.canViewAllLeads &&
+      lead.assignedTo?.toString() !== req.user._id.toString()
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to email this lead',
+      });
+    }
+
+    const emailData = {
+      to: lead.email,
+      subject: subject,
+      body: message,
+      attachments: attachments || [],
+    };
+
+    try {
+      const result = await sendEmailToLead(emailData);
+
+      lead.communications.push({
+        type: 'email',
+        notes: `Subject: ${subject}\n\nMessage: ${message}`,
+        createdBy: req.user.id,
+      });
+
+      await lead.save();
+
+      const responseData = {
+        to: lead.email,
+        subject: subject,
+        messageId: result.messageId,
+      };
+
+      if (result.previewUrl) {
+        responseData.previewUrl = result.previewUrl;
+        responseData.testMode = true;
+        responseData.note = 'Using test mode. View email at previewUrl';
+      }
+
+      res.status(200).json({
+        success: true,
+        message: result.previewUrl
+          ? 'Email sent successfully (TEST MODE - check previewUrl)'
+          : 'Email sent successfully',
+        data: responseData,
+      });
+    } catch (emailError) {
+      return res.status(500).json({
+        success: false,
+        message: emailError.message || 'Failed to send email. Please check email configuration.',
+      });
+    }
   } catch (err) {
     next(err);
   }

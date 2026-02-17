@@ -928,7 +928,213 @@ GET https://event-backend-lqu0.onrender.com/api/leads/6981f35a75abdaecf610b757
 
 ---
 
-### 4.8 Add Follow-Up to Lead
+### 4.8 Send Email to Lead
+**POST** `https://event-backend-lqu0.onrender.com/api/leads/:id/send-email`
+
+**Headers:** `Authorization: Bearer TOKEN`
+
+**URL Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | String | Lead ID |
+
+**Request Body:**
+```json
+{
+  "subject": "Follow-up on our discussion",
+  "message": "<h1>Hello John,</h1><p>Thank you for visiting our booth at Tech Expo 2024...</p>",
+  "attachments": [
+    {
+      "filename": "proposal.pdf",
+      "path": "/uploads/attachments/proposal.pdf"
+    }
+  ]
+}
+```
+
+**Required Fields:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `subject` | String | Email subject line |
+| `message` | String | Email body (supports HTML) |
+
+**Optional Fields:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `attachments` | Array | Array of attachment objects with `filename` and `path` |
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Email sent successfully",
+  "data": {
+    "to": "john@abc.com",
+    "subject": "Follow-up on our discussion",
+    "messageId": "<unique-message-id@domain.com>"
+  }
+}
+```
+
+**Error Responses:**
+
+**Missing Subject or Message:**
+```json
+{
+  "success": false,
+  "message": "Please provide subject and message"
+}
+```
+
+**Lead Not Found:**
+```json
+{
+  "success": false,
+  "message": "Lead not found"
+}
+```
+
+**Lead Has No Email:**
+```json
+{
+  "success": false,
+  "message": "This lead does not have an email address"
+}
+```
+
+**Not Authorized:**
+```json
+{
+  "success": false,
+  "message": "Not authorized to email this lead"
+}
+```
+
+**Email Service Not Configured:**
+```json
+{
+  "success": false,
+  "message": "Email service not configured. Please contact administrator."
+}
+```
+
+**Failed to Send:**
+```json
+{
+  "success": false,
+  "message": "Failed to send email. Please check email configuration."
+}
+```
+
+**Features:**
+- ✅ Sends email directly from the app
+- ✅ Supports HTML formatting
+- ✅ Supports file attachments
+- ✅ Automatically tracks email in communications
+- ✅ Validates lead has email address
+- ✅ Checks user authorization
+- ✅ Returns message ID for tracking
+
+**Email Configuration Options:**
+
+### **Option 1: NO Configuration Needed (Test Mode)** ⭐ **EASIEST**
+
+**No SMTP credentials?** No problem! The system automatically uses **Ethereal Email** for testing:
+- ✅ **FREE** - No signup required
+- ✅ **Auto-configured** - Works out of the box
+- ✅ **Test mode** - Perfect for development
+- ✅ **View emails** at https://ethereal.email
+- ⚠️ Emails NOT delivered to real addresses (test only)
+
+**Response includes preview URL:**
+```json
+{
+  "success": true,
+  "message": "Email sent successfully (TEST MODE - check previewUrl)",
+  "data": {
+    "to": "john@abc.com",
+    "subject": "Test Email",
+    "messageId": "<message-id>",
+    "previewUrl": "https://ethereal.email/message/xxx",
+    "testMode": true,
+    "note": "Using test mode. View email at previewUrl"
+  }
+}
+```
+
+### **Option 2: Use Gmail (FREE - 500 emails/day)**
+
+Add to `.env` file:
+```env
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_SECURE=false
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASSWORD=your_app_password
+EMAIL_FROM_NAME=Event Management System
+```
+
+**Setup:**
+1. Enable 2-Factor Authentication
+2. Generate App Password: https://myaccount.google.com/apppasswords
+3. Use app password in `EMAIL_PASSWORD`
+
+### **Option 3: Use SendGrid (FREE - 100 emails/day)**
+
+Add to `.env` file:
+```env
+EMAIL_HOST=smtp.sendgrid.net
+EMAIL_PORT=587
+EMAIL_SECURE=false
+EMAIL_USER=apikey
+EMAIL_PASSWORD=your_sendgrid_api_key
+EMAIL_FROM_NAME=Event Management System
+```
+
+**Setup:**
+1. Sign up: https://sendgrid.com (Free tier available)
+2. Get API key from Settings → API Keys
+3. Use API key as password
+
+### **Option 4: Use Mailgun (FREE - 5,000 emails/month)**
+
+Add to `.env` file:
+```env
+EMAIL_HOST=smtp.mailgun.org
+EMAIL_PORT=587
+EMAIL_SECURE=false
+EMAIL_USER=postmaster@your-domain.mailgun.org
+EMAIL_PASSWORD=your_mailgun_smtp_password
+EMAIL_FROM_NAME=Event Management System
+```
+
+**Setup:**
+1. Sign up: https://mailgun.com (Free tier available)
+2. Verify domain or use sandbox domain
+3. Get SMTP credentials from dashboard
+
+**Example (JavaScript):**
+```javascript
+const response = await fetch('https://event-backend-lqu0.onrender.com/api/leads/LEAD_ID/send-email', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    subject: 'Thank you for visiting our booth',
+    message: '<h2>Hi John,</h2><p>It was great meeting you...</p>',
+    attachments: []
+  })
+});
+
+const result = await response.json();
+console.log(result); // Email sent!
+```
+
+---
+
+### 4.9 Add Follow-Up to Lead
 **POST** `https://event-backend-lqu0.onrender.com/api/leads/:id/followups`
 
 **Headers:** `Authorization: Bearer TOKEN`
@@ -974,7 +1180,7 @@ GET https://event-backend-lqu0.onrender.com/api/leads/6981f35a75abdaecf610b757
 
 ---
 
-### 4.9 Update Follow-Up Status
+### 4.10 Update Follow-Up Status
 **PUT** `https://event-backend-lqu0.onrender.com/api/leads/:id/followups/:followupId`
 
 **Headers:** `Authorization: Bearer TOKEN`
@@ -1015,7 +1221,7 @@ GET https://event-backend-lqu0.onrender.com/api/leads/6981f35a75abdaecf610b757
 
 ---
 
-### 4.10 Attach File to Lead
+### 4.11 Attach File to Lead
 **POST** `https://event-backend-lqu0.onrender.com/api/leads/:id/attachments`
 
 **Headers:** `Authorization: Bearer TOKEN`
@@ -1071,7 +1277,7 @@ GET https://event-backend-lqu0.onrender.com/api/leads/6981f35a75abdaecf610b757
 
 ---
 
-### 4.11 Upload and Scan Business Card ⭐
+### 4.12 Upload and Scan Business Card ⭐
 **POST** `https://event-backend-lqu0.onrender.com/api/leads/upload-and-scan-business-card`
 
 **Headers:** `Authorization: Bearer TOKEN`
@@ -1232,7 +1438,7 @@ fetch('https://event-backend-lqu0.onrender.com/api/leads/upload-and-scan-busines
 
 ---
 
-### 4.12 Get My Reminders
+### 4.13 Get My Reminders
 **GET** `https://event-backend-lqu0.onrender.com/api/leads/reminders`
 
 **Headers:** `Authorization: Bearer TOKEN`
@@ -2539,6 +2745,7 @@ fetch('https://event-backend-lqu0.onrender.com/api/files/upload', {
 | DELETE | `/api/leads/:id` | Delete lead |
 | POST | `/api/leads/:id/notes` | Add note |
 | POST | `/api/leads/:id/communications` | Add communication |
+| POST | `/api/leads/:id/send-email` | Send email to lead 📧 |
 | POST | `/api/leads/:id/followups` | Add follow-up |
 | PUT | `/api/leads/:id/followups/:followupId` | Update follow-up |
 | POST | `/api/leads/:id/attachments` | Attach file |

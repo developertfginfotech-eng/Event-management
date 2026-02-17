@@ -18,6 +18,7 @@ const {
   getEventReport,
   exportToExcel,
   exportToCSV,
+  sendEmail,
 } = require('../controllers/leadController');
 
 const router = express.Router();
@@ -87,6 +88,9 @@ router.route('/:id/followups/:followupId').put(updateFollowUp);
 
 // Communication tracking
 router.route('/:id/communications').post(trackCommunication);
+
+// Send email
+router.route('/:id/send-email').post(sendEmail);
 
 // Reminders
 router.route('/reminders').get(getReminders);
