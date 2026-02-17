@@ -1210,24 +1210,17 @@ fetch('https://event-backend-lqu0.onrender.com/api/leads/upload-and-scan-busines
 }
 ```
 
-**Benefits of This Endpoint:**
+**Benefits:**
 - ✅ **One-step process**: Upload and scan in a single request
-- ✅ **No need to call file upload API separately**
+- ✅ **No separate file upload needed**: Direct image upload
 - ✅ **Better user experience**: Simpler frontend code
 - ✅ **Automatic file validation**: Format and size checks built-in
 - ✅ **Automatic cleanup**: Failed uploads are deleted automatically
 - ✅ **Direct lead creation**: Creates lead immediately if all data extracted
+- ✅ **Smart data extraction**: Uses OCR to parse business card text
+- ✅ **Partial data support**: Returns extracted data even if some fields missing
 
-**Comparison with Two-Step Process:**
-
-**Old Method (2 steps):**
-1. POST `/api/files/upload` → Get file path
-2. POST `/api/leads/scan-business-card` → Scan and create lead
-
-**New Method (1 step):** ⭐ RECOMMENDED
-1. POST `/api/leads/upload-and-scan-business-card` → Upload + Scan + Create lead
-
-**Tips for Better Results:**
+**Tips for Best Results:**
 - ✅ Ensure good lighting when taking photo
 - ✅ Hold camera steady and focus clearly
 - ✅ Capture the entire business card
@@ -1239,7 +1232,7 @@ fetch('https://event-backend-lqu0.onrender.com/api/leads/upload-and-scan-busines
 
 ---
 
-### 4.13 Get My Reminders
+### 4.12 Get My Reminders
 **GET** `https://event-backend-lqu0.onrender.com/api/leads/reminders`
 
 **Headers:** `Authorization: Bearer TOKEN`
@@ -2549,8 +2542,7 @@ fetch('https://event-backend-lqu0.onrender.com/api/files/upload', {
 | POST | `/api/leads/:id/followups` | Add follow-up |
 | PUT | `/api/leads/:id/followups/:followupId` | Update follow-up |
 | POST | `/api/leads/:id/attachments` | Attach file |
-| POST | `/api/leads/scan-business-card` | Scan business card (2-step) |
-| POST | `/api/leads/upload-and-scan-business-card` | Upload & scan business card (1-step) ⭐ |
+| POST | `/api/leads/upload-and-scan-business-card` | Upload & scan business card ⭐ |
 | GET | `/api/leads/reminders` | Get my reminders |
 | **Expenses** |
 | GET | `/api/expenses` | Get my expenses |
