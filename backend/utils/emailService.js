@@ -1,3 +1,4 @@
+const sgMail = require('@sendgrid/mail');
 const nodemailer = require('nodemailer');
 
 let testAccountCache = null;
@@ -30,31 +31,59 @@ const createTestAccount = async () => {
   }
 };
 
-const createTransporter = async () => {
-  if (process.env.EMAIL_HOST && process.env.EMAIL_USER) {
-    console.log('📧 Using configured SMTP:', process.env.EMAIL_HOST);
-    return nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
-      port: process.env.EMAIL_PORT || 587,
-      secure: process.env.EMAIL_SECURE === 'true',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-    });
+const sendEmailToLead = async ({ to, subject, body, attachments = [], from = null }) => {
+  if (!to) {
+    throw new Error('Recipient email address is required');
   }
 
-  console.log('⚠️  No SMTP configured. Trying Ethereal Email for testing...');
+  // Try SendGrid API first (works on Render - uses HTTPS, not SMTP)
+  if (process.env.EMAIL_PASSWORD && process.env.EMAIL_PASSWORD.startsWith('SG.')) {
+    try {
+      console.log('📧 Using SendGrid HTTP API');
+      sgMail.setApiKey(process.env.EMAIL_PASSWORD);
+
+      const fromEmail = from || process.env.EMAIL_USER || 'noreply@example.com';
+      const fromName = process.env.EMAIL_FROM_NAME || 'Event Management';
+
+      const msg = {
+        to: to,
+        from: {
+          email: fromEmail,
+          name: fromName,
+        },
+        subject: subject,
+        html: body,
+        attachments: attachments.map(att => ({
+          content: att.content,
+          filename: att.filename,
+          type: att.contentType || 'application/octet-stream',
+          disposition: 'attachment',
+        })),
+      };
+
+      const response = await sgMail.send(msg);
+
+      console.log('✅ Email sent successfully via SendGrid!');
+      return {
+        success: true,
+        messageId: response[0].headers['x-message-id'],
+        response: 'Email sent via SendGrid',
+      };
+    } catch (error) {
+      console.error('SendGrid API error:', error.response?.body || error.message);
+      throw new Error(`Failed to send email: ${error.message}`);
+    }
+  }
+
+  // Fallback to Ethereal Email for testing (SMTP)
+  console.log('⚠️  No SendGrid API key configured. Using Ethereal Email for testing...');
   const testAccount = await createTestAccount();
 
   if (!testAccount) {
-    console.error('❌ Could not create test account. Please configure SMTP in environment variables.');
-    return null;
+    throw new Error('Email service not available. Please configure SendGrid API key.');
   }
 
-  return nodemailer.createTransport({
+  const transporter = nodemailer.createTransport({
     host: 'smtp.ethereal.email',
     port: 587,
     secure: false,
@@ -65,21 +94,9 @@ const createTransporter = async () => {
     connectionTimeout: 10000,
     greetingTimeout: 10000,
   });
-};
-
-const sendEmailToLead = async ({ to, subject, body, attachments = [], from = null }) => {
-  const transporter = await createTransporter();
-
-  if (!transporter) {
-    throw new Error('Email service not available. Please try again or contact administrator.');
-  }
-
-  if (!to) {
-    throw new Error('Recipient email address is required');
-  }
 
   const mailOptions = {
-    from: from || `"${process.env.EMAIL_FROM_NAME || 'Event Management'}" <${process.env.EMAIL_USER}>`,
+    from: from || `"${process.env.EMAIL_FROM_NAME || 'Event Management'}" <${testAccount.user}>`,
     to: to,
     subject: subject,
     html: body,
@@ -133,38 +150,22 @@ const sendBulkEmails = async (emails) => {
 };
 
 const verifyEmailConfig = async () => {
-  const transporter = await createTransporter();
-
-  if (!transporter) {
-    return {
-      success: false,
-      message: 'Email service not configured. Using Ethereal Email for testing.',
-    };
-  }
-
-  try {
-    await transporter.verify();
-
-    if (testAccountCache) {
-      return {
-        success: true,
-        message: 'Using Ethereal Email (test mode). Emails will not be delivered to real addresses.',
-        mode: 'test',
-        viewEmailsAt: 'https://ethereal.email',
-      };
-    }
-
+  if (process.env.EMAIL_PASSWORD && process.env.EMAIL_PASSWORD.startsWith('SG.')) {
     return {
       success: true,
-      message: 'Email service is configured and ready',
+      message: 'SendGrid email service is configured and ready',
       mode: 'production',
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: `Email service configuration error: ${error.message}`,
+      provider: 'SendGrid HTTP API',
     };
   }
+
+  return {
+    success: true,
+    message: 'Using Ethereal Email (test mode). Emails will not be delivered to real addresses.',
+    mode: 'test',
+    provider: 'Ethereal Email',
+    viewEmailsAt: 'https://ethereal.email',
+  };
 };
 
 module.exports = {
