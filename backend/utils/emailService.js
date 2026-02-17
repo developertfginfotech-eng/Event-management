@@ -8,14 +8,24 @@ const createTestAccount = async () => {
   }
 
   try {
-    const testAccount = await nodemailer.createTestAccount();
+    console.log('Creating test email account...');
+
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Timeout creating test account')), 10000)
+    );
+
+    const testAccount = await Promise.race([
+      nodemailer.createTestAccount(),
+      timeoutPromise
+    ]);
+
     testAccountCache = testAccount;
     console.log('✅ Test email account created!');
     console.log('📧 Email:', testAccount.user);
     console.log('🔗 View emails at: https://ethereal.email');
     return testAccount;
   } catch (error) {
-    console.error('Failed to create test account:', error);
+    console.error('Failed to create test account:', error.message);
     return null;
   }
 };
@@ -31,13 +41,16 @@ const createTransporter = async () => {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
     });
   }
 
-  console.log('⚠️  No SMTP configured. Using Ethereal Email for testing...');
+  console.log('⚠️  No SMTP configured. Trying Ethereal Email for testing...');
   const testAccount = await createTestAccount();
 
   if (!testAccount) {
+    console.error('❌ Could not create test account. Please configure SMTP in environment variables.');
     return null;
   }
 
@@ -49,6 +62,8 @@ const createTransporter = async () => {
       user: testAccount.user,
       pass: testAccount.pass,
     },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
   });
 };
 
