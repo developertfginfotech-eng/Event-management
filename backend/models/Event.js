@@ -79,6 +79,10 @@ const eventSchema = new mongoose.Schema(
       enum: ['Upcoming', 'Live', 'Completed', 'Postponed', 'Cancelled'],
       default: 'Upcoming',
     },
+    statusOverride: {
+      type: Boolean,
+      default: false,
+    },
     budget: {
       type: Number,
       default: 0,
@@ -131,6 +135,57 @@ eventSchema.virtual('totalExpenses', {
   localField: '_id',
   foreignField: 'event',
   count: true,
+});
+
+// Method to calculate automatic status based on dates
+eventSchema.methods.updateAutoStatus = function () {
+  // Don't override if manually set to Postponed, Cancelled, or Completed
+  if (this.statusOverride && ['Postponed', 'Cancelled', 'Completed'].includes(this.status)) {
+    return this.status;
+  }
+
+  const now = new Date();
+  const startDate = new Date(this.startDate);
+  const endDate = new Date(this.endDate);
+
+  // Set time to start of day for accurate comparison
+  now.setHours(0, 0, 0, 0);
+  startDate.setHours(0, 0, 0, 0);
+  endDate.setHours(0, 0, 0, 0);
+
+  if (now < startDate) {
+    this.status = 'Upcoming';
+  } else if (now >= startDate && now <= endDate) {
+    this.status = 'Live';
+  } else {
+    this.status = 'Completed';
+  }
+
+  return this.status;
+};
+
+// Pre-save middleware to auto-update status
+eventSchema.pre('save', function (next) {
+  this.updateAutoStatus();
+  next();
+});
+
+// Pre-find middleware to update status for all found documents
+eventSchema.post('find', async function (docs) {
+  if (docs && docs.length > 0) {
+    for (const doc of docs) {
+      if (doc.updateAutoStatus) {
+        doc.updateAutoStatus();
+      }
+    }
+  }
+});
+
+// Pre-findOne middleware
+eventSchema.post('findOne', async function (doc) {
+  if (doc && doc.updateAutoStatus) {
+    doc.updateAutoStatus();
+  }
 });
 
 // Index for better query performance

@@ -114,6 +114,14 @@ exports.updateEvent = async (req, res, next) => {
       });
     }
 
+    // If user manually sets status to Postponed, Cancelled, or Completed, mark as override
+    if (req.body.status && ['Postponed', 'Cancelled', 'Completed'].includes(req.body.status)) {
+      req.body.statusOverride = true;
+    } else if (req.body.status && ['Upcoming', 'Live'].includes(req.body.status)) {
+      // If user manually sets to Upcoming or Live, remove override (allow auto-calculation)
+      req.body.statusOverride = false;
+    }
+
     // Update fields
     Object.assign(event, req.body);
 
