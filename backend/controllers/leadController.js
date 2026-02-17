@@ -7,6 +7,44 @@ const ExcelJS = require('exceljs');
 const { Parser } = require('json2csv');
 const { sendEmailToLead } = require('../utils/emailService');
 
+// Helper function to normalize URLs (add https:// if missing)
+const normalizeUrl = (url) => {
+  if (!url || url.trim() === '') return url;
+  const trimmedUrl = url.trim();
+  if (!/^https?:\/\//i.test(trimmedUrl)) {
+    return `https://${trimmedUrl}`;
+  }
+  return trimmedUrl;
+};
+
+// Helper function to normalize all URL fields in lead data
+const normalizeLeadUrls = (data) => {
+  if (data.website) {
+    data.website = normalizeUrl(data.website);
+  }
+  if (data.socialMediaLinks) {
+    if (data.socialMediaLinks.linkedin) {
+      data.socialMediaLinks.linkedin = normalizeUrl(data.socialMediaLinks.linkedin);
+    }
+    if (data.socialMediaLinks.facebook) {
+      data.socialMediaLinks.facebook = normalizeUrl(data.socialMediaLinks.facebook);
+    }
+    if (data.socialMediaLinks.instagram) {
+      data.socialMediaLinks.instagram = normalizeUrl(data.socialMediaLinks.instagram);
+    }
+    if (data.socialMediaLinks.twitter) {
+      data.socialMediaLinks.twitter = normalizeUrl(data.socialMediaLinks.twitter);
+    }
+    if (data.socialMediaLinks.youtube) {
+      data.socialMediaLinks.youtube = normalizeUrl(data.socialMediaLinks.youtube);
+    }
+    if (data.socialMediaLinks.other) {
+      data.socialMediaLinks.other = normalizeUrl(data.socialMediaLinks.other);
+    }
+  }
+  return data;
+};
+
 // @desc    Get all leads
 // @route   GET /api/leads
 // @access  Private
@@ -92,6 +130,9 @@ exports.createLead = async (req, res, next) => {
   try {
     req.body.createdBy = req.user.id;
 
+    // Automatically add https:// to URLs if not present
+    req.body = normalizeLeadUrls(req.body);
+
     const lead = await Lead.create(req.body);
 
     res.status(201).json({
@@ -126,6 +167,9 @@ exports.updateLead = async (req, res, next) => {
         message: 'Not authorized to update this lead',
       });
     }
+
+    // Automatically add https:// to URLs if not present
+    req.body = normalizeLeadUrls(req.body);
 
     lead = await Lead.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
