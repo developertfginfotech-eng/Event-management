@@ -1105,6 +1105,82 @@ GET https://event-backend-lqu0.onrender.com/api/leads/6981f35a75abdaecf610b757
 }
 ```
 
+**Error Responses:**
+
+**Missing Image URL:**
+```json
+{
+  "success": false,
+  "message": "Please provide an image URL to scan"
+}
+```
+
+**Invalid File Path:**
+```json
+{
+  "success": false,
+  "message": "Image file not found. Please upload the business card image again and use the correct file path."
+}
+```
+
+**Image Too Blurry or Low Quality:**
+```json
+{
+  "success": false,
+  "message": "Unable to read business card. The image quality is too low. Please retake the photo with better lighting and focus, then reupload."
+}
+```
+
+**Unsupported File Format:**
+```json
+{
+  "success": false,
+  "message": "Invalid image format. Please upload a JPG or PNG image of the business card and try again."
+}
+```
+
+**Image File Corrupted:**
+```json
+{
+  "success": false,
+  "message": "The uploaded image file is corrupted or unreadable. Please reupload a new photo of the business card."
+}
+```
+
+**No Text Detected:**
+```json
+{
+  "success": false,
+  "message": "No text could be detected on the business card. Please ensure the card is clearly visible and well-lit, then reupload."
+}
+```
+
+**OCR Processing Failed:**
+```json
+{
+  "success": false,
+  "message": "Failed to process the business card image. Please reupload a clearer photo and try again."
+}
+```
+
+**File Size Too Large:**
+```json
+{
+  "success": false,
+  "message": "Image file size is too large. Please compress the image or take a new photo, then reupload (max 5MB)."
+}
+```
+
+**Tips for Better Scanning Results:**
+- ✅ Ensure good lighting when taking photo
+- ✅ Hold camera steady and focus clearly
+- ✅ Capture the entire business card
+- ✅ Avoid shadows and reflections
+- ✅ Use high resolution (at least 1080p)
+- ✅ Keep card flat and straight
+- ✅ Supported formats: JPG, PNG
+- ✅ Maximum file size: 5MB
+
 **Note:**
 - Upload business card image first using File Upload API
 - This endpoint uses OCR to extract text from business card
@@ -1113,7 +1189,175 @@ GET https://event-backend-lqu0.onrender.com/api/leads/6981f35a75abdaecf610b757
 
 ---
 
-### 4.12 Get My Reminders
+### 4.12 Upload and Scan Business Card (Direct Upload - RECOMMENDED)
+**POST** `https://event-backend-lqu0.onrender.com/api/leads/upload-and-scan-business-card`
+
+**Headers:** `Authorization: Bearer TOKEN`
+
+**Content-Type:** `multipart/form-data`
+
+**Request Body (Form Data):**
+| Field | Type | Description |
+|-------|------|-------------|
+| `file` | File | Business card image (JPG or PNG) |
+| `sourceId` | String | Event ID (MongoDB ObjectId) |
+
+**Request Example (JavaScript):**
+```javascript
+const formData = new FormData();
+formData.append('file', businessCardImageFile); // From file input
+formData.append('sourceId', 'EVENT_ID');
+
+fetch('https://event-backend-lqu0.onrender.com/api/leads/upload-and-scan-business-card', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_TOKEN'
+  },
+  body: formData
+})
+.then(response => response.json())
+.then(data => console.log(data));
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Business card uploaded and scanned successfully",
+  "data": {
+    "lead": {
+      "_id": "LEAD_ID",
+      "name": "John Smith",
+      "company": "ABC Corp",
+      "phone": "+1234567890",
+      "email": "john@abc.com",
+      "designation": "Marketing Manager",
+      "source": "EVENT_ID",
+      "businessCardImage": "/uploads/business-cards/card-1707132000000.jpg",
+      "createdBy": "USER_ID",
+      "createdAt": "2024-02-05T10:00:00Z"
+    },
+    "rawText": "John Smith\nMarketing Manager\nABC Corp\n...",
+    "parsedData": {
+      "name": "John Smith",
+      "company": "ABC Corp",
+      "phone": "+1234567890",
+      "email": "john@abc.com",
+      "designation": "Marketing Manager"
+    },
+    "businessCardImage": "/uploads/business-cards/card-1707132000000.jpg"
+  }
+}
+```
+
+**Error Responses:**
+
+**Missing File:**
+```json
+{
+  "success": false,
+  "message": "Please upload a business card image"
+}
+```
+
+**Missing Event ID:**
+```json
+{
+  "success": false,
+  "message": "Please provide sourceId (event ID)"
+}
+```
+
+**Invalid File Format:**
+```json
+{
+  "success": false,
+  "message": "Invalid image format. Please upload a JPG or PNG image of the business card and try again."
+}
+```
+
+**Image Too Blurry or Low Quality:**
+```json
+{
+  "success": false,
+  "message": "Unable to read business card. The image quality is too low. Please retake the photo with better lighting and focus, then reupload."
+}
+```
+
+**File Size Too Large:**
+```json
+{
+  "success": false,
+  "message": "Image file size is too large. Please compress the image or take a new photo, then reupload (max 5MB)."
+}
+```
+
+**No Text Detected:**
+```json
+{
+  "success": false,
+  "message": "No text could be detected on the business card. Please ensure the card is clearly visible and well-lit, then reupload."
+}
+```
+
+**OCR Processing Failed:**
+```json
+{
+  "success": false,
+  "message": "Failed to process the business card image. Please reupload a clearer photo and try again."
+}
+```
+
+**Partial Data Extracted:**
+```json
+{
+  "success": true,
+  "message": "Business card scanned successfully. Some fields may need manual completion.",
+  "data": {
+    "rawText": "John Smith\nABC Corp\n...",
+    "parsedData": {
+      "name": "John Smith",
+      "company": "ABC Corp",
+      "phone": "",
+      "email": ""
+    },
+    "businessCardImage": "/uploads/business-cards/card-1707132000000.jpg",
+    "note": "Please review and complete any missing required fields (name, company, phone) before creating the lead.",
+    "missingFields": ["phone", "email"]
+  }
+}
+```
+
+**Benefits of This Endpoint:**
+- ✅ **One-step process**: Upload and scan in a single request
+- ✅ **No need to call file upload API separately**
+- ✅ **Better user experience**: Simpler frontend code
+- ✅ **Automatic file validation**: Format and size checks built-in
+- ✅ **Automatic cleanup**: Failed uploads are deleted automatically
+- ✅ **Direct lead creation**: Creates lead immediately if all data extracted
+
+**Comparison with Two-Step Process:**
+
+**Old Method (2 steps):**
+1. POST `/api/files/upload` → Get file path
+2. POST `/api/leads/scan-business-card` → Scan and create lead
+
+**New Method (1 step):** ⭐ RECOMMENDED
+1. POST `/api/leads/upload-and-scan-business-card` → Upload + Scan + Create lead
+
+**Tips for Better Results:**
+- ✅ Ensure good lighting when taking photo
+- ✅ Hold camera steady and focus clearly
+- ✅ Capture the entire business card
+- ✅ Avoid shadows and reflections
+- ✅ Use high resolution (at least 1080p)
+- ✅ Keep card flat and straight
+- ✅ Supported formats: JPG, PNG
+- ✅ Maximum file size: 5MB
+
+---
+
+### 4.13 Get My Reminders
 **GET** `https://event-backend-lqu0.onrender.com/api/leads/reminders`
 
 **Headers:** `Authorization: Bearer TOKEN`
@@ -2423,7 +2667,8 @@ fetch('https://event-backend-lqu0.onrender.com/api/files/upload', {
 | POST | `/api/leads/:id/followups` | Add follow-up |
 | PUT | `/api/leads/:id/followups/:followupId` | Update follow-up |
 | POST | `/api/leads/:id/attachments` | Attach file |
-| POST | `/api/leads/scan-business-card` | Scan business card |
+| POST | `/api/leads/scan-business-card` | Scan business card (2-step) |
+| POST | `/api/leads/upload-and-scan-business-card` | Upload & scan business card (1-step) ⭐ |
 | GET | `/api/leads/reminders` | Get my reminders |
 | **Expenses** |
 | GET | `/api/expenses` | Get my expenses |

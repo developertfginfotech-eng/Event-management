@@ -329,11 +329,14 @@ exports.attachFile = async (req, res, next) => {
 exports.scanBusinessCard = async (req, res, next) => {
   try {
     const { imageUrl, sourceId } = req.body;
+    const fs = require('fs');
+    const path = require('path');
 
+    // Check if imageUrl is provided
     if (!imageUrl) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide an image URL',
+        message: 'Please provide an image URL to scan',
       });
     }
 
@@ -344,15 +347,86 @@ exports.scanBusinessCard = async (req, res, next) => {
       });
     }
 
+    // Validate image URL format
     const imagePath = imageUrl.startsWith('/') ? `.${imageUrl}` : imageUrl;
 
-    const worker = await createWorker('eng');
-    const { data: { text } } = await worker.recognize(imagePath);
-    await worker.terminate();
+    // Check if file exists
+    if (!fs.existsSync(imagePath)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Image file not found. Please upload the business card image again and use the correct file path.',
+      });
+    }
 
+    // Check file extension
+    const fileExt = path.extname(imagePath).toLowerCase();
+    const validExtensions = ['.jpg', '.jpeg', '.png'];
+    if (!validExtensions.includes(fileExt)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid image format. Please upload a JPG or PNG image of the business card and try again.',
+      });
+    }
+
+    // Check file size (max 5MB)
+    const stats = fs.statSync(imagePath);
+    const fileSizeInMB = stats.size / (1024 * 1024);
+    if (fileSizeInMB > 5) {
+      return res.status(400).json({
+        success: false,
+        message: 'Image file size is too large. Please compress the image or take a new photo, then reupload (max 5MB).',
+      });
+    }
+
+    // Check if file is readable
+    try {
+      fs.accessSync(imagePath, fs.constants.R_OK);
+    } catch (accessErr) {
+      return res.status(400).json({
+        success: false,
+        message: 'The uploaded image file is corrupted or unreadable. Please reupload a new photo of the business card.',
+      });
+    }
+
+    // Perform OCR
+    let worker;
+    let text = '';
+
+    try {
+      worker = await createWorker('eng');
+      const result = await worker.recognize(imagePath);
+      text = result.data.text;
+      await worker.terminate();
+    } catch (ocrError) {
+      if (worker) await worker.terminate();
+
+      // Check if it's an image quality issue
+      if (ocrError.message && ocrError.message.includes('quality')) {
+        return res.status(400).json({
+          success: false,
+          message: 'Unable to read business card. The image quality is too low. Please retake the photo with better lighting and focus, then reupload.',
+        });
+      }
+
+      // Generic OCR processing error
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to process the business card image. Please reupload a clearer photo and try again.',
+      });
+    }
+
+    // Check if any text was detected
+    if (!text || text.trim().length < 10) {
+      return res.status(400).json({
+        success: false,
+        message: 'No text could be detected on the business card. Please ensure the card is clearly visible and well-lit, then reupload.',
+      });
+    }
+
+    // Parse the extracted text
     const parsedData = parseBusinessCardText(text);
 
-
+    // Try to create lead with extracted data
     try {
       const lead = await Lead.create({
         ...parsedData,
@@ -363,6 +437,7 @@ exports.scanBusinessCard = async (req, res, next) => {
 
       res.status(201).json({
         success: true,
+        message: 'Business card scanned successfully',
         data: {
           lead,
           rawText: text,
@@ -370,13 +445,15 @@ exports.scanBusinessCard = async (req, res, next) => {
         },
       });
     } catch (validationError) {
-      res.status(400).json({
-        success: false,
-        message: 'OCR completed but some required fields are missing. Please review and complete manually.',
+      // Return parsed data even if lead creation fails
+      res.status(200).json({
+        success: true,
+        message: 'Business card scanned successfully. Some fields may need manual completion.',
         data: {
           rawText: text,
           parsedData,
           businessCardImage: imageUrl,
+          note: 'Please review and complete any missing required fields (name, company, phone) before creating the lead.',
           missingFields: validationError.errors
             ? Object.keys(validationError.errors)
             : [],
@@ -384,7 +461,163 @@ exports.scanBusinessCard = async (req, res, next) => {
       });
     }
   } catch (err) {
-    next(err);
+    // Handle any unexpected errors
+    console.error('Business card scan error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'An unexpected error occurred while scanning the business card. Please try again.',
+    });
+  }
+};
+
+// @desc    Upload and scan business card in one step (Direct Upload + OCR)
+// @route   POST /api/leads/upload-and-scan-business-card
+// @access  Private
+exports.uploadAndScanBusinessCard = async (req, res) => {
+  try {
+    const fs = require('fs');
+    const { sourceId } = req.body;
+
+    // Check if file was uploaded
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload a business card image',
+      });
+    }
+
+    // Check if sourceId is provided
+    if (!sourceId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide sourceId (event ID)',
+      });
+    }
+
+    const uploadedFile = req.file;
+
+    // Validate file type
+    const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowedMimeTypes.includes(uploadedFile.mimetype)) {
+      // Delete uploaded file
+      fs.unlinkSync(uploadedFile.path);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid image format. Please upload a JPG or PNG image of the business card and try again.',
+      });
+    }
+
+    // Validate file size (max 5MB)
+    const fileSizeInMB = uploadedFile.size / (1024 * 1024);
+    if (fileSizeInMB > 5) {
+      // Delete uploaded file
+      fs.unlinkSync(uploadedFile.path);
+      return res.status(400).json({
+        success: false,
+        message: 'Image file size is too large. Please compress the image or take a new photo, then reupload (max 5MB).',
+      });
+    }
+
+    const imagePath = uploadedFile.path;
+    const imageUrl = `/${uploadedFile.path}`;
+
+    // Perform OCR
+    let worker;
+    let text = '';
+
+    try {
+      worker = await createWorker('eng');
+      const result = await worker.recognize(imagePath);
+      text = result.data.text;
+      await worker.terminate();
+    } catch (ocrError) {
+      if (worker) await worker.terminate();
+
+      // Delete uploaded file on error
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+
+      // Check if it's an image quality issue
+      if (ocrError.message && (ocrError.message.includes('quality') || ocrError.message.includes('recognize'))) {
+        return res.status(400).json({
+          success: false,
+          message: 'Unable to read business card. The image quality is too low. Please retake the photo with better lighting and focus, then reupload.',
+        });
+      }
+
+      // Generic OCR processing error
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to process the business card image. Please reupload a clearer photo and try again.',
+      });
+    }
+
+    // Check if any text was detected
+    if (!text || text.trim().length < 10) {
+      // Delete uploaded file if no text detected
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+
+      return res.status(400).json({
+        success: false,
+        message: 'No text could be detected on the business card. Please ensure the card is clearly visible and well-lit, then reupload.',
+      });
+    }
+
+    // Parse the extracted text
+    const parsedData = parseBusinessCardText(text);
+
+    // Try to create lead with extracted data
+    try {
+      const lead = await Lead.create({
+        ...parsedData,
+        createdBy: req.user.id,
+        source: sourceId,
+        businessCardImage: imageUrl,
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Business card uploaded and scanned successfully',
+        data: {
+          lead,
+          rawText: text,
+          parsedData,
+          businessCardImage: imageUrl,
+        },
+      });
+    } catch (validationError) {
+      // Return parsed data even if lead creation fails
+      res.status(200).json({
+        success: true,
+        message: 'Business card scanned successfully. Some fields may need manual completion.',
+        data: {
+          rawText: text,
+          parsedData,
+          businessCardImage: imageUrl,
+          note: 'Please review and complete any missing required fields (name, company, phone) before creating the lead.',
+          missingFields: validationError.errors
+            ? Object.keys(validationError.errors)
+            : [],
+        },
+      });
+    }
+  } catch (err) {
+    // Clean up uploaded file on error
+    if (req.file && req.file.path) {
+      const fs = require('fs');
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+    }
+
+    console.error('Upload and scan error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'An unexpected error occurred while uploading and scanning the business card. Please try again.',
+    });
   }
 };
 
