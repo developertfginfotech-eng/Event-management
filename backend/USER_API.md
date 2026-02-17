@@ -37,7 +37,7 @@
   - `POST /api/leads/:id/followups` - Schedule follow-ups
   - `PUT /api/leads/:id/followups/:followupId` - Mark follow-ups complete
   - `POST /api/leads/:id/attachments` - Attach files (proposals, documents)
-  - `POST /api/leads/scan-business-card` - OCR business card scanning
+  - `POST /api/leads/upload-and-scan-business-card` - Direct upload & OCR scanning ⭐
   - `GET /api/leads/reminders` - Get upcoming follow-up reminders
 
 - ✅ **Updated Lead Structure**:
