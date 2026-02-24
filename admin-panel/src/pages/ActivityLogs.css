@@ -15,8 +15,104 @@
   font-weight: 700;
 }
 
+/* ── Tabs ─────────────────────────────────────────── */
+.al-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 12px;
+  width: fit-content;
+}
+
+.al-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border: none;
+  background: transparent;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.al-tab:hover {
+  color: #0f172a;
+  background: rgba(255,255,255,0.6);
+}
+
+.al-tab-active {
+  background: white;
+  color: #6366f1;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.al-tab-count {
+  background: #6366f1;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* ── Source badge ─────────────────────────────────── */
+.al-source-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.al-source-app {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.al-source-web {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+/* ── Loading ──────────────────────────────────────── */
+.al-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  gap: 12px;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.al-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(99,102,241,0.2);
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: al-spin 0.7s linear infinite;
+}
+
+@keyframes al-spin { to { transform: rotate(360deg); } }
+
+/* ── Filters ──────────────────────────────────────── */
 .activity-logs-page .filters {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   display: flex;
   gap: 12px;
   align-items: center;
@@ -158,6 +254,11 @@
 }
 
 @media (max-width: 768px) {
+  .al-tabs {
+    width: 100%;
+    overflow-x: auto;
+  }
+
   .activity-logs-page .filters {
     flex-direction: column;
     width: 100%;
