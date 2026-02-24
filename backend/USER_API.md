@@ -1,8 +1,23 @@
 # Event Management System - Mobile App API Documentation
 
-**Version:** 2.0
+**Version:** 2.1
 **Base URL:** `https://event-backend-lqu0.onrender.com`
-**Last Updated:** February 6, 2026
+**Last Updated:** February 24, 2026
+
+---
+
+## 📋 What's New in Version 2.1
+
+### Lead Assignment - Multi-User Support
+- ✅ **`assignedTo` is now an array** — a lead can be assigned to multiple users simultaneously
+- ✅ **All assignees can view, update, follow up, and email the lead**
+- ✅ **2 New Endpoints**:
+  - `POST /api/leads/:id/assignees` — Add one assignee without replacing others
+  - `DELETE /api/leads/:id/assignees/:userId` — Remove one specific assignee
+- ✅ **Updated `POST /api/leads/:id/assign`** — now accepts `{ userIds: [] }` to replace all assignees at once (still accepts `{ userId }` for backward compatibility)
+- ✅ **`GET /api/leads/reminders`** — returns reminders for leads where you are **any** of the assignees
+
+> **Breaking change:** `assignedTo` in all API responses is now an **array** of user objects instead of a single object. Update your app to handle an array.
 
 ---
 
@@ -430,10 +445,13 @@ GET https://event-backend-lqu0.onrender.com/api/leads?search=john
       },
       "status": "New",
       "priority": "High",
-      "assignedTo": {
-        "_id": "USER_ID",
-        "name": "Manager Name"
-      },
+      "assignedTo": [
+        {
+          "_id": "USER_ID",
+          "name": "Manager Name",
+          "email": "manager@example.com"
+        }
+      ],
       "createdBy": {
         "_id": "USER_ID",
         "name": "Your Name"
@@ -507,10 +525,18 @@ GET https://event-backend-lqu0.onrender.com/api/leads/6981f35a75abdaecf610b757
     },
     "status": "Contacted",
     "priority": "High",
-    "assignedTo": {
-      "_id": "USER_ID",
-      "name": "Manager Name"
-    },
+    "assignedTo": [
+      {
+        "_id": "USER_ID_1",
+        "name": "Manager Name",
+        "email": "manager@example.com"
+      },
+      {
+        "_id": "USER_ID_2",
+        "name": "Second Assignee",
+        "email": "second@example.com"
+      }
+    ],
     "createdBy": {
       "_id": "USER_ID",
       "name": "Your Name"
@@ -1480,7 +1506,9 @@ GET https://event-backend-lqu0.onrender.com/api/leads/reminders?startDate=2024-0
 }
 ```
 
-**Note:** Returns all upcoming and pending follow-ups for your leads
+**Note:** Returns reminders for leads where you are any of the assignees.
+
+> **Note on Assignment:** Users cannot assign leads themselves. Only Admins/Managers can assign leads via the admin panel. You will only see leads that have been assigned to you.
 
 ---
 
