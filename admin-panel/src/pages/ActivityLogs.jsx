@@ -49,6 +49,7 @@ function ActivityLogs() {
     setActiveTab(key)
     setFilter('')
     setPage(1)
+    setTotal(0)
   }
 
   const formatDate = (date) => {
