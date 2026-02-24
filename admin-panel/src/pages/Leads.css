@@ -499,3 +499,49 @@
     min-width: 900px;
   }
 }
+
+/* Multi-assignee chips */
+.assignee-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.assignee-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #e0e7ff;
+  color: #3730a3;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.chip-remove {
+  background: none;
+  border: none;
+  color: #6366f1;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+  margin-left: 2px;
+}
+
+.chip-remove:hover {
+  color: #dc2626;
+}
+
+.assignee-add-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.assignee-add-row .form-control {
+  flex: 1;
+}
+

@@ -173,7 +173,11 @@ function LeadDetails() {
             </div>
             <div className="info-item">
               <label>Assigned To</label>
-              <p>{lead.assignedTo?.name || 'Unassigned'}</p>
+              <p>
+                {lead.assignedTo && lead.assignedTo.length > 0
+                  ? lead.assignedTo.map(u => u.name).join(', ')
+                  : 'Unassigned'}
+              </p>
             </div>
             <div className="info-item">
               <label>Created By</label>

@@ -18,7 +18,8 @@ function Leads() {
   })
   const [showAssignModal, setShowAssignModal] = useState(false)
   const [selectedLead, setSelectedLead] = useState(null)
-  const [assignUserId, setAssignUserId] = useState('')
+  const [assignUserIds, setAssignUserIds] = useState([])
+  const [assignDropdownValue, setAssignDropdownValue] = useState('')
 
   useEffect(() => {
     loadLeads()
@@ -88,18 +89,25 @@ function Leads() {
     }
   }
 
-  const handleAssign = async () => {
-    if (!assignUserId) {
-      alert('Please select a user')
-      return
-    }
+  const handleAddAssignee = () => {
+    if (!assignDropdownValue) return
+    if (assignUserIds.includes(assignDropdownValue)) return
+    setAssignUserIds([...assignUserIds, assignDropdownValue])
+    setAssignDropdownValue('')
+  }
 
+  const handleRemoveAssignee = (userId) => {
+    setAssignUserIds(assignUserIds.filter(id => id !== userId))
+  }
+
+  const handleAssign = async () => {
     try {
-      await assignLead(selectedLead._id, assignUserId)
+      await assignLead(selectedLead._id, assignUserIds)
       alert('Lead assigned successfully')
       setShowAssignModal(false)
       setSelectedLead(null)
-      setAssignUserId('')
+      setAssignUserIds([])
+      setAssignDropdownValue('')
       loadLeads()
     } catch (error) {
       alert(error.response?.data?.message || 'Error assigning lead')
@@ -284,7 +292,11 @@ function Leads() {
                           {lead.priority}
                         </span>
                       </td>
-                      <td>{lead.assignedTo?.name || 'Unassigned'}</td>
+                      <td>
+                        {lead.assignedTo && lead.assignedTo.length > 0
+                          ? lead.assignedTo.map(u => u.name).join(', ')
+                          : 'Unassigned'}
+                      </td>
                       <td className="actions">
                         <button
                           onClick={() => navigate(`/leads/${lead._id}`)}
@@ -303,7 +315,12 @@ function Leads() {
                         <button
                           onClick={() => {
                             setSelectedLead(lead)
-                            setAssignUserId(lead.assignedTo?._id || '')
+                            setAssignUserIds(
+                              Array.isArray(lead.assignedTo)
+                                ? lead.assignedTo.map(u => u._id)
+                                : lead.assignedTo?._id ? [lead.assignedTo._id] : []
+                            )
+                            setAssignDropdownValue('')
                             setShowAssignModal(true)
                           }}
                           className="btn-icon"
@@ -334,24 +351,58 @@ function Leads() {
             <h2>Assign Lead</h2>
             <p>Lead: <strong>{selectedLead?.name}</strong> - {selectedLead?.company}</p>
 
+            {/* Currently assigned users */}
             <div className="form-group">
-              <label>Assign To User:</label>
-              <select
-                value={assignUserId}
-                onChange={(e) => setAssignUserId(e.target.value)}
-                className="form-control"
-              >
-                <option value="">Select User</option>
-                {users.map(user => (
-                  <option key={user._id} value={user._id}>
-                    {user.name} - {user.role}
-                  </option>
-                ))}
-              </select>
+              <label>Assigned Users:</label>
+              {assignUserIds.length === 0 ? (
+                <p className="no-data" style={{ margin: '4px 0' }}>No users assigned</p>
+              ) : (
+                <div className="assignee-chips">
+                  {assignUserIds.map(uid => {
+                    const user = users.find(u => u._id === uid)
+                    return (
+                      <span key={uid} className="assignee-chip">
+                        {user ? user.name : uid}
+                        <button
+                          type="button"
+                          className="chip-remove"
+                          onClick={() => handleRemoveAssignee(uid)}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Add a user */}
+            <div className="form-group">
+              <label>Add User:</label>
+              <div className="assignee-add-row">
+                <select
+                  value={assignDropdownValue}
+                  onChange={(e) => setAssignDropdownValue(e.target.value)}
+                  className="form-control"
+                >
+                  <option value="">Select User</option>
+                  {users
+                    .filter(u => !assignUserIds.includes(u._id))
+                    .map(user => (
+                      <option key={user._id} value={user._id}>
+                        {user.name} - {user.role}
+                      </option>
+                    ))}
+                </select>
+                <button type="button" onClick={handleAddAssignee} className="btn-secondary">
+                  Add
+                </button>
+              </div>
             </div>
 
             <div className="modal-actions">
-              <button onClick={handleAssign} className="btn-primary">Assign</button>
+              <button onClick={handleAssign} className="btn-primary">Save</button>
               <button onClick={() => setShowAssignModal(false)} className="btn-secondary">Cancel</button>
             </div>
           </div>
