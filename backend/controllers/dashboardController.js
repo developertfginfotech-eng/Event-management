@@ -62,8 +62,9 @@ exports.getAdminDashboard = async (req, res, next) => {
 
     const totalExpense =
       expenseSummary.reduce((acc, item) => acc + item.totalAmount, 0) || 0;
-    const pendingExpense =
-      expenseSummary.find((item) => item._id === 'Pending')?.totalAmount || 0;
+    const pendingEntry = expenseSummary.find((item) => item._id === 'Pending');
+    const pendingExpense = pendingEntry?.totalAmount || 0;
+    const pendingCount = pendingEntry?.count || 0;
     const approvedExpense =
       expenseSummary.find((item) => item._id === 'Approved')?.totalAmount || 0;
 
@@ -78,8 +79,10 @@ exports.getAdminDashboard = async (req, res, next) => {
     ]);
 
     const budgetAmount = totalBudget[0]?.total || 0;
+    // Utilization includes both approved and pending (total committed spend)
+    const committedExpense = approvedExpense + pendingExpense;
     const budgetUtilization = budgetAmount > 0
-      ? ((approvedExpense / budgetAmount) * 100).toFixed(2)
+      ? ((committedExpense / budgetAmount) * 100).toFixed(2)
       : 0;
 
     // Enhanced attendance summary
@@ -129,10 +132,11 @@ exports.getAdminDashboard = async (req, res, next) => {
         expenses: {
           total: totalExpense,
           pending: pendingExpense,
+          pendingCount: pendingCount,
           approved: approvedExpense,
           budget: budgetAmount,
           budgetUtilization: parseFloat(budgetUtilization),
-          remaining: budgetAmount - approvedExpense,
+          remaining: budgetAmount - committedExpense,
         },
         attendance: {
           today: todayAttendance,
@@ -159,13 +163,13 @@ exports.getUserDashboard = async (req, res, next) => {
     }).select('name startDate endDate status location');
 
     // Assigned leads
-    const myLeads = await Lead.countDocuments({ assignedTo: req.user._id });
+    const myLeads = await Lead.countDocuments({ assignedTo: { $in: [req.user._id] } });
     const myNewLeads = await Lead.countDocuments({
-      assignedTo: req.user._id,
+      assignedTo: { $in: [req.user._id] },
       status: 'New',
     });
     const myConvertedLeads = await Lead.countDocuments({
-      assignedTo: req.user._id,
+      assignedTo: { $in: [req.user._id] },
       status: 'Converted',
     });
 
