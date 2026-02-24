@@ -47,6 +47,11 @@ const activityLogSchema = new mongoose.Schema({
   userAgent: {
     type: String
   },
+  source: {
+    type: String,
+    enum: ['web', 'app'],
+    default: 'web'
+  },
   status: {
     type: String,
     enum: ['SUCCESS', 'FAILURE'],
@@ -62,6 +67,7 @@ const activityLogSchema = new mongoose.Schema({
 // Index for faster queries
 activityLogSchema.index({ user: 1, createdAt: -1 });
 activityLogSchema.index({ action: 1, createdAt: -1 });
+activityLogSchema.index({ source: 1, createdAt: -1 });
 activityLogSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('ActivityLog', activityLogSchema);

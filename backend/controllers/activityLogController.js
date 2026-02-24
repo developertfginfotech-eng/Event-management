@@ -5,13 +5,17 @@ const ActivityLog = require('../models/ActivityLog');
 // @access  Admin/Super Admin
 exports.getActivityLogs = async (req, res, next) => {
   try {
-    const { action, userId, startDate, endDate, page = 1, limit = 50 } = req.query;
+    const { action, source, userId, startDate, endDate, page = 1, limit = 50 } = req.query;
 
     // Build query
     const query = {};
 
     if (action) {
       query.action = action;
+    }
+
+    if (source && (source === 'web' || source === 'app')) {
+      query.source = source;
     }
 
     if (userId) {

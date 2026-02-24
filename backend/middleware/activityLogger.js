@@ -1,6 +1,11 @@
 const ActivityLog = require('../models/ActivityLog');
 
 // Helper function to create activity log
+// Detect source: browsers always include "Mozilla" in their UA; native apps typically don't
+const detectSource = (userAgent = '') => {
+  return /mozilla/i.test(userAgent) ? 'web' : 'app';
+};
+
 const logActivity = async ({
   user,
   action,
@@ -12,6 +17,7 @@ const logActivity = async ({
   req
 }) => {
   try {
+    const userAgent = req.headers['user-agent'] || '';
     await ActivityLog.create({
       user: user._id,
       userName: user.name,
@@ -21,7 +27,8 @@ const logActivity = async ({
       resource,
       resourceId,
       ipAddress: req.ip || req.connection.remoteAddress,
-      userAgent: req.headers['user-agent'],
+      userAgent,
+      source: detectSource(userAgent),
       status,
       errorMessage
     });
