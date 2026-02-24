@@ -241,6 +241,8 @@
 .db-mini-stat:last-child { border-right: none; }
 .db-mini-label { font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
 .db-mini-value { font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+.db-value-red { color: #ef4444; }
+.db-util-note { font-size: 11px; font-weight: 400; color: #94a3b8; }
 
 /* Dots */
 .db-dot {

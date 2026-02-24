@@ -237,26 +237,28 @@ function Dashboard() {
               <span className="db-mini-value">₹{(stats.expenses.pending / 1000).toFixed(0)}K</span>
             </div>
             <div className="db-mini-stat">
-              <span className="db-dot db-dot-gray"></span>
-              <span className="db-mini-label">Remaining</span>
-              <span className="db-mini-value">₹{(stats.expenses.remaining / 1000).toFixed(0)}K</span>
+              <span className={`db-dot ${stats.expenses.remaining < 0 ? 'db-dot-red' : 'db-dot-gray'}`}></span>
+              <span className="db-mini-label">{stats.expenses.remaining < 0 ? 'Over Budget' : 'Remaining'}</span>
+              <span className={`db-mini-value ${stats.expenses.remaining < 0 ? 'db-value-red' : ''}`}>
+                {stats.expenses.remaining < 0 ? '-' : ''}₹{(Math.abs(stats.expenses.remaining) / 1000).toFixed(0)}K
+              </span>
             </div>
           </div>
           <div className="db-progress-block">
             <div className="db-progress-header">
-              <span>Budget Utilization</span>
+              <span>Budget Utilization <small className="db-util-note">(approved + pending)</small></span>
               <span className="db-progress-pct">{budgetUtil}%</span>
             </div>
             <div className="db-progress-track">
               <div
-                className={`db-progress-fill ${budgetUtil > 85 ? 'db-fill-red' : 'db-fill-green'}`}
+                className={`db-progress-fill ${budgetUtil > 100 ? 'db-fill-red' : budgetUtil > 85 ? 'db-fill-red' : 'db-fill-green'}`}
                 style={{ width: `${Math.min(budgetUtil, 100)}%` }}
               ></div>
             </div>
           </div>
           {stats.expenses.pending > 0 && (
             <Link to="/expenses?status=Pending" className="db-alert">
-              ⚠️ {stats.expenses.pendingCount || 'Some'} expenses pending review
+              ⚠️ {stats.expenses.pendingCount} expense{stats.expenses.pendingCount !== 1 ? 's' : ''} pending review
             </Link>
           )}
         </div>
