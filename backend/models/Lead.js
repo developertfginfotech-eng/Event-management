@@ -99,10 +99,12 @@ const leadSchema = new mongoose.Schema(
       enum: ['New', 'Contacted', 'Follow-up', 'Qualified', 'Converted', 'Lost'],
       default: 'New',
     },
-    assignedTo: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-    },
+    assignedTo: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

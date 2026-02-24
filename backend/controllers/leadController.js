@@ -56,7 +56,7 @@ exports.getLeads = async (req, res, next) => {
     if (source) query.source = source;
     if (status) query.status = status;
     if (priority) query.priority = priority;
-    if (assignedTo) query.assignedTo = assignedTo;
+    if (assignedTo) query.assignedTo = { $in: [assignedTo] };
 
     if (search) {
       query.$or = [
@@ -67,7 +67,7 @@ exports.getLeads = async (req, res, next) => {
     }
 
     if (!req.user.permissions.canViewAllLeads) {
-      query.assignedTo = req.user._id;
+      query.assignedTo = { $in: [req.user._id] };
     }
 
     const leads = await Lead.find(query)
@@ -106,7 +106,9 @@ exports.getLead = async (req, res, next) => {
 
     if (
       !req.user.permissions.canViewAllLeads &&
-      lead.assignedTo?.toString() !== req.user._id.toString()
+      !lead.assignedTo.some(a =>
+        (a._id || a).toString() === req.user._id.toString()
+      )
     ) {
       return res.status(403).json({
         success: false,
@@ -160,7 +162,7 @@ exports.updateLead = async (req, res, next) => {
 
     if (
       !req.user.permissions.canViewAllLeads &&
-      lead.assignedTo?.toString() !== req.user._id.toString()
+      !lead.assignedTo.some(a => a.toString() === req.user._id.toString())
     ) {
       return res.status(403).json({
         success: false,
@@ -315,28 +317,50 @@ exports.bulkImport = async (req, res, next) => {
 // @access  Private (Manager/Admin)
 exports.assignLead = async (req, res, next) => {
   try {
-    const { userId } = req.body;
+    let userIds = req.body.userIds || (req.body.userId ? [req.body.userId] : []);
+    userIds = [...new Set(userIds.map(String))];
 
     const lead = await Lead.findByIdAndUpdate(
       req.params.id,
-      { assignedTo: userId },
+      { assignedTo: userIds },
       { new: true, runValidators: true }
-    );
+    ).populate('assignedTo', 'name email');
 
-    if (!lead) {
-      return res.status(404).json({
-        success: false,
-        message: 'Lead not found',
-      });
-    }
+    if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
+    res.status(200).json({ success: true, data: lead });
+  } catch (err) { next(err); }
+};
 
-    res.status(200).json({
-      success: true,
-      data: lead,
-    });
-  } catch (err) {
-    next(err);
-  }
+exports.addAssignee = async (req, res, next) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ success: false, message: 'Please provide userId' });
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    const lead = await Lead.findByIdAndUpdate(
+      req.params.id,
+      { $addToSet: { assignedTo: userId } },
+      { new: true }
+    ).populate('assignedTo', 'name email');
+
+    if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
+    res.status(200).json({ success: true, message: `${user.name} added as assignee`, data: lead });
+  } catch (err) { next(err); }
+};
+
+exports.removeAssignee = async (req, res, next) => {
+  try {
+    const lead = await Lead.findByIdAndUpdate(
+      req.params.id,
+      { $pull: { assignedTo: req.params.userId } },
+      { new: true }
+    ).populate('assignedTo', 'name email');
+
+    if (!lead) return res.status(404).json({ success: false, message: 'Lead not found' });
+    res.status(200).json({ success: true, message: 'Assignee removed', data: lead });
+  } catch (err) { next(err); }
 };
 
 
@@ -834,7 +858,7 @@ exports.getReminders = async (req, res, next) => {
     endDate.setDate(endDate.getDate() + parseInt(days));
 
     const leads = await Lead.find({
-      assignedTo: req.user._id,
+      assignedTo: { $in: [req.user._id] },
       'followUps.completed': false,
       'followUps.date': {
         $gte: new Date(),
@@ -904,9 +928,13 @@ exports.getEventReport = async (req, res, next) => {
       stats.byPriority[lead.priority] = (stats.byPriority[lead.priority] || 0) + 1;
       stats.bySource[lead.source] = (stats.bySource[lead.source] || 0) + 1;
 
-      if (lead.assignedTo) {
-        const userName = lead.assignedTo.name;
-        stats.byUser[userName] = (stats.byUser[userName] || 0) + 1;
+      if (lead.assignedTo && lead.assignedTo.length > 0) {
+        lead.assignedTo.forEach(u => {
+          const name = u.name || 'Unknown';
+          stats.byUser[name] = (stats.byUser[name] || 0) + 1;
+        });
+      } else {
+        stats.byUser['Unassigned'] = (stats.byUser['Unassigned'] || 0) + 1;
       }
 
       if (lead.status === 'Converted') {
@@ -942,7 +970,7 @@ exports.exportToExcel = async (req, res, next) => {
 
     if (source) query.source = source;
     if (status) query.status = status;
-    if (assignedTo) query.assignedTo = assignedTo;
+    if (assignedTo) query.assignedTo = { $in: [assignedTo] };
 
     const leads = await Lead.find(query)
       .populate('source', 'name')
@@ -983,7 +1011,9 @@ exports.exportToExcel = async (req, res, next) => {
         source: lead.source?.name || '',
         status: lead.status,
         priority: lead.priority,
-        assignedTo: lead.assignedTo?.name || 'Unassigned',
+        assignedTo: lead.assignedTo && lead.assignedTo.length > 0
+          ? lead.assignedTo.map(u => u.name).filter(Boolean).join(', ')
+          : 'Unassigned',
         createdBy: lead.createdBy?.name || '',
         createdAt: lead.createdAt.toLocaleDateString(),
       });
@@ -1015,7 +1045,7 @@ exports.exportToCSV = async (req, res, next) => {
 
     if (source) query.source = source;
     if (status) query.status = status;
-    if (assignedTo) query.assignedTo = assignedTo;
+    if (assignedTo) query.assignedTo = { $in: [assignedTo] };
 
     const leads = await Lead.find(query)
       .populate('source', 'name')
@@ -1032,7 +1062,9 @@ exports.exportToCSV = async (req, res, next) => {
       Source: lead.source?.name || '',
       Status: lead.status,
       Priority: lead.priority,
-      'Assigned To': lead.assignedTo?.name || 'Unassigned',
+      'Assigned To': lead.assignedTo && lead.assignedTo.length > 0
+        ? lead.assignedTo.map(u => u.name).filter(Boolean).join(', ')
+        : 'Unassigned',
       'Created By': lead.createdBy?.name || '',
       'Created At': new Date(lead.createdAt).toLocaleDateString(),
     }));
@@ -1084,7 +1116,7 @@ exports.sendEmail = async (req, res, next) => {
 
     if (
       !req.user.permissions.canViewAllLeads &&
-      lead.assignedTo?.toString() !== req.user._id.toString()
+      !lead.assignedTo.some(a => a.toString() === req.user._id.toString())
     ) {
       return res.status(403).json({
         success: false,

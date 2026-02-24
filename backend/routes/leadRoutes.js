@@ -9,6 +9,8 @@ const {
   addFollowUp,
   bulkImport,
   assignLead,
+  addAssignee,
+  removeAssignee,
   attachFile,
   scanBusinessCard,
   uploadAndScanBusinessCard,
@@ -79,6 +81,8 @@ router.route('/upload-and-scan-business-card').post(upload.single('file'), uploa
 
 // Lead management
 router.route('/:id/assign').post(assignLead);
+router.route('/:id/assignees').post(addAssignee);
+router.route('/:id/assignees/:userId').delete(removeAssignee);
 router.route('/:id/attachments').post(attachFile);
 
 // Notes and follow-ups

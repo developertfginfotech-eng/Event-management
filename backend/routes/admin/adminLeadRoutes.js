@@ -6,6 +6,8 @@ const {
   updateLead,
   addAttachment,
   assignLead,
+  addAssignee,
+  removeAssignee,
   bulkImportLeads,
   deleteLead,
   getEventReport,
@@ -39,6 +41,8 @@ router.post('/:id/attachments', addAttachment);
 
 // Assign lead to user
 router.post('/:id/assign', assignLead);
+router.post('/:id/assignees', addAssignee);
+router.delete('/:id/assignees/:userId', removeAssignee);
 
 // Bulk import leads from CSV
 router.post('/bulk-import', bulkImportLeads);
